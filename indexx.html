@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>龚曦 · Full-Stack Developer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c14;
+    --bg2: #0c1220;
+    --bg3: #111827;
+    --card: #0f1929;
+    --border: rgba(0,217,184,0.12);
+    --accent: #00d9b8;
+    --accent2: #7f5af0;
+    --accent3: #ff6b6b;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --faint: #334155;
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+
+  /* Grid noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,217,184,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,217,184,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 4rem;
+    background: rgba(8,12,20,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+
+  .nav-logo span { color: var(--muted); }
+
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: 2rem;
+  }
+
+  nav a {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.04em;
+    transition: color 0.2s;
+  }
+
+  nav a:hover { color: var(--accent); }
+
+  /* HERO */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 8rem 4rem 4rem;
+    overflow: hidden;
+    z-index: 1;
+  }
+
+  .hero-glow {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,217,184,0.08) 0%, transparent 70%);
+    top: 50%;
+    left: 40%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .hero-glow2 {
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(127,90,240,0.06) 0%, transparent 70%);
+    bottom: 10%;
+    right: 10%;
+    pointer-events: none;
+  }
+
+  .hero-content {
+    max-width: 750px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    background: rgba(0,217,184,0.05);
+  }
+
+  .hero-tag .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+
+  h1 .name-accent { color: var(--accent); }
+
+  .hero-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+    min-height: 1.6em;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: var(--accent);
+    vertical-align: middle;
+    animation: blink 1s infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .hero-desc {
+    font-size: 1.05rem;
+    color: var(--muted);
+    line-height: 1.8;
+    max-width: 560px;
+    margin-bottom: 2.5rem;
+  }
+
+  .hero-btns {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #080c14;
+    font-weight: 600;
+  }
+
+  .btn-primary:hover {
+    background: #00f0cc;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,217,184,0.3);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 3rem;
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .stat-label {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* SECTIONS */
+  section {
+    position: relative;
+    z-index: 1;
+    padding: 6rem 4rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-tag::after {
+    content: '';
+    flex: 1;
+    max-width: 60px;
+    height: 1px;
+    background: var(--accent);
+    opacity: 0.4;
+  }
+
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 3rem;
+  }
+
+  /* ABOUT */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  .about-text p {
+    color: var(--muted);
+    line-height: 1.9;
+    margin-bottom: 1rem;
+  }
+
+  .advantages-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .advantage-item {
+    display: flex;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .advantage-item:hover {
+    border-color: rgba(0,217,184,0.35);
+    transform: translateX(4px);
+  }
+
+  .adv-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    min-width: 24px;
+    padding-top: 2px;
+  }
+
+  .adv-text {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* SKILLS */
+  .skills-section { background: var(--bg2); }
+
+  .skills-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .skill-group-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.75rem;
+  }
+
+  .skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .skill-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    border: 1px solid;
+    transition: all 0.2s;
+  }
+
+  .skill-tag.primary {
+    background: rgba(0,217,184,0.08);
+    border-color: rgba(0,217,184,0.3);
+    color: var(--accent);
+  }
+
+  .skill-tag.primary:hover {
+    background: rgba(0,217,184,0.15);
+    transform: translateY(-2px);
+  }
+
+  .skill-tag.secondary {
+    background: rgba(127,90,240,0.08);
+    border-color: rgba(127,90,240,0.3);
+    color: #a78bfa;
+  }
+
+  .skill-tag.secondary:hover {
+    background: rgba(127,90,240,0.15);
+    transform: translateY(-2px);
+  }
+
+  .skill-tag.tertiary {
+    background: rgba(255,107,107,0.07);
+    border-color: rgba(255,107,107,0.25);
+    color: #fca5a5;
+  }
+
+  .skill-tag.tertiary:hover {
+    background: rgba(255,107,107,0.12);
+    transform: translateY(-2px);
+  }
+
+  /* PROJECTS */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .project-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .project-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .project-card:hover {
+    border-color: rgba(0,217,184,0.3);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  }
+
+  .project-card:hover::before { opacity: 1; }
+
+  .project-card.featured {
+    border-color: rgba(0,217,184,0.2);
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .project-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .project-type {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(0,217,184,0.08);
+    border: 1px solid rgba(0,217,184,0.2);
+    padding: 3px 10px;
+    border-radius: 100px;
+  }
+
+  .project-links {
+    display: flex;
+    gap: 8px;
+  }
+
+  .project-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: var(--faint);
+    color: var(--muted);
+    text-decoration: none;
+    transition: all 0.2s;
+    font-size: 15px;
+  }
+
+  .project-link:hover {
+    background: var(--accent);
+    color: #080c14;
+  }
+
+  .project-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+    color: var(--text);
+  }
+
+  .project-desc {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 1.25rem;
+  }
+
+  .project-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .stack-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--faint);
+    padding: 3px 9px;
+    border-radius: 4px;
+  }
+
+  .project-highlights {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .highlight-item {
+    font-size: 13px;
+    color: var(--muted);
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .highlight-item::before {
+    content: '▸';
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* EXPERIENCE */
+  .timeline {
+    position: relative;
+    padding-left: 2rem;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--accent), transparent);
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 3rem;
+  }
+
+  .timeline-dot {
+    position: absolute;
+    left: -2.4rem;
+    top: 6px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 3px rgba(0,217,184,0.2);
+  }
+
+  .timeline-period {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+
+  .timeline-company {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+  }
+
+  .timeline-role {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .role-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent2);
+    background: rgba(127,90,240,0.1);
+    border: 1px solid rgba(127,90,240,0.25);
+    padding: 2px 8px;
+    border-radius: 100px;
+  }
+
+  .timeline-content {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+  }
+
+  .timeline-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .timeline-list li {
+    font-size: 14px;
+    color: var(--muted);
+    list-style: none;
+    display: flex;
+    gap: 8px;
+  }
+
+  .timeline-list li::before {
+    content: '→';
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  /* EDUCATION */
+  .edu-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+  }
+
+  .edu-school {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+  }
+
+  .edu-degree {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .edu-rank {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    background: rgba(0,217,184,0.08);
+    border: 1px solid rgba(0,217,184,0.2);
+    padding: 4px 12px;
+    border-radius: 100px;
+    margin-bottom: 1rem;
+  }
+
+  .edu-courses {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .edu-course {
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--faint);
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+
+  .edu-year {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  /* CONTACT */
+  .contact-section {
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+  }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+  }
+
+  .contact-heading {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+  }
+
+  .contact-heading .accent { color: var(--accent); }
+
+  .contact-desc {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 2rem;
+  }
+
+  .contact-links {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .contact-link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .contact-link:hover {
+    border-color: rgba(0,217,184,0.35);
+    transform: translateX(4px);
+  }
+
+  .contact-link-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(0,217,184,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .contact-link-label {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .contact-link-value {
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--faint);
+    border-top: 1px solid var(--border);
+    position: relative;
+    z-index: 1;
+  }
+
+  /* DIVIDER */
+  .section-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* ANIMATIONS */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* MOBILE */
+  @media (max-width: 768px) {
+    nav { padding: 1rem 1.5rem; }
+    nav ul { gap: 1rem; }
+    .hero { padding: 6rem 1.5rem 3rem; }
+    section { padding: 4rem 1.5rem; }
+    .about-grid { grid-template-columns: 1fr; }
+    .project-card.featured { grid-template-columns: 1fr; }
+    .contact-grid { grid-template-columns: 1fr; }
+    .hero-stats { gap: 1.5rem; }
+    .edu-card { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo"><span>~/</span>gongxi.dev</div>
+  <ul>
+    <li><a href="#about">关于</a></li>
+    <li><a href="#skills">技能</a></li>
+    <li><a href="#projects">项目</a></li>
+    <li><a href="#experience">经历</a></li>
+    <li><a href="#contact">联系</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="hero-content">
+    <div class="hero-tag">
+      <span class="dot"></span>
+      Available · 26届应届生 · 随时到岗
+    </div>
+
+    <h1>
+      Hi, I'm<br>
+      <span class="name-accent">龚 曦</span>
+    </h1>
+
+    <p class="hero-sub" id="typed-text">
+      <span id="typed"></span><span class="cursor"></span>
+    </p>
+
+    <p class="hero-desc">
+      全栈开发者，专注 Android 原生与 Spring Boot 后端。热衷于构建完整的产品闭环——从数据库设计到移动端交互，独立完成整个技术链路。
+    </p>
+
+    <div class="hero-btns">
+      <a href="#projects" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        查看项目
+      </a>
+      <a href="#contact" class="btn btn-ghost">联系我 →</a>
+    </div>
+
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num">3+</div>
+        <div class="stat-label">完整项目</div>
+      </div>
+      <div>
+        <div class="stat-num">7+</div>
+        <div class="stat-label">掌握技术栈</div>
+      </div>
+      <div>
+        <div class="stat-num">5mo</div>
+        <div class="stat-label">实习经历</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="section-tag">01 &nbsp; about me</div>
+  <h2>个人优势</h2>
+
+  <div class="about-grid">
+    <div class="about-text fade-in">
+      <p>我是龚曦，一名即将毕业的大专全栈开发者，主攻 Android 原生开发与 Java 后端。从零构建过完整的商业级应用，涵盖后端架构设计、Android 客户端开发、前端 Vue 实现与数据库优化。</p>
+      <p>在武汉晶音科技实习期间，主导完成了小程序后端从 PHP/FastAdmin 到 Java/Spring Boot 的完整重构，并建立了 GitLab 代码规范与版本管理流程。</p>
+      <p>我相信工程师不只是写代码——而是解决问题、构建可持续运行的系统。</p>
+    </div>
+
+    <div class="advantages-list fade-in">
+      <div class="advantage-item">
+        <span class="adv-num">01</span>
+        <span class="adv-text">全栈独立开发能力，覆盖 UI 设计、后端逻辑与前后端交互</span>
+      </div>
+      <div class="advantage-item">
+        <span class="adv-num">02</span>
+        <span class="adv-text">精通 Android 原生开发，熟练使用 Android Studio 与 Material Design</span>
+      </div>
+      <div class="advantage-item">
+        <span class="adv-num">03</span>
+        <span class="adv-text">Git 版本控制规范化实践，推动团队代码评审机制落地</span>
+      </div>
+      <div class="advantage-item">
+        <span class="adv-num">04</span>
+        <span class="adv-text">具备快速学习与技术探索能力，持续优化开发效率</span>
+      </div>
+      <div class="advantage-item">
+        <span class="adv-num">05</span>
+        <span class="adv-text">初步项目管理经验，完成计划制定、进度跟踪与汇报</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- SKILLS -->
+<section id="skills" class="skills-section" style="max-width:100%; padding: 6rem 0;">
+  <div style="max-width:1100px; margin:0 auto; padding: 0 4rem;">
+    <div class="section-tag">02 &nbsp; tech stack</div>
+    <h2>技术栈</h2>
+
+    <div class="skills-container fade-in">
+      <div>
+        <div class="skill-group-label">// 后端 · Backend</div>
+        <div class="skill-tags">
+          <span class="skill-tag primary">Java</span>
+          <span class="skill-tag primary">Spring Boot</span>
+          <span class="skill-tag primary">Spring Data JPA</span>
+          <span class="skill-tag primary">PHP</span>
+          <span class="skill-tag primary">MySQL</span>
+          <span class="skill-tag primary">H2</span>
+          <span class="skill-tag primary">WebSocket</span>
+          <span class="skill-tag primary">RESTful API</span>
+          <span class="skill-tag primary">RBAC</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="skill-group-label">// 移动端 · Android</div>
+        <div class="skill-tags">
+          <span class="skill-tag secondary">Android Native</span>
+          <span class="skill-tag secondary">Kotlin</span>
+          <span class="skill-tag secondary">Android Studio</span>
+          <span class="skill-tag secondary">Retrofit2</span>
+          <span class="skill-tag secondary">Material Design 3</span>
+          <span class="skill-tag secondary">Glide</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="skill-group-label">// 前端 · Frontend</div>
+        <div class="skill-tags">
+          <span class="skill-tag tertiary">Vue 3</span>
+          <span class="skill-tag tertiary">TypeScript</span>
+          <span class="skill-tag tertiary">Element Plus</span>
+          <span class="skill-tag tertiary">Pinia</span>
+          <span class="skill-tag tertiary">Vite</span>
+          <span class="skill-tag tertiary">HTML/CSS</span>
+          <span class="skill-tag tertiary">JavaScript</span>
+          <span class="skill-tag tertiary">微信小程序</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="skill-group-label">// 工具链 · Tooling</div>
+        <div class="skill-tags">
+          <span class="skill-tag primary">Git / GitLab</span>
+          <span class="skill-tag primary">Gradle</span>
+          <span class="skill-tag secondary">Python</span>
+          <span class="skill-tag secondary">爬虫 / 大数据分析</span>
+          <span class="skill-tag tertiary">Docker (基础)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="section-tag">03 &nbsp; projects</div>
+  <h2>项目经历</h2>
+
+  <div class="projects-grid">
+
+    <!-- Renovation App - Featured -->
+    <div class="project-card featured fade-in">
+      <div>
+        <div class="project-meta">
+          <span class="project-type">全栈 · 个人项目</span>
+          <div class="project-links">
+            <a href="https://github.com/Tieamone/Renovation-App" target="_blank" class="project-link" title="GitHub">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <div class="project-title">智能装修全流程管理平台</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);margin-bottom:0.75rem;">Renovation App · 2024.01 — 至今</div>
+
+        <p class="project-desc">
+          针对传统装修行业流程链条长、协作混乱、资金透明度低的痛点，独立设计并开发了覆盖 3 种角色、4 大业务模块的全流程管理平台，实现从材料审核到施工节点的完整闭环。
+        </p>
+
+        <div class="project-highlights">
+          <div class="highlight-item">基于 WebSocket 实现实时消息推送，替代 HTTP 轮询，消息触达率 100%</div>
+          <div class="highlight-item">引入数据库乐观锁保障高并发场景下的数据一致性，并发审核零冲突</div>
+          <div class="highlight-item">构建基于注解与过滤器的 RBAC 权限模型，实现接口级细粒度权限控制</div>
+          <div class="highlight-item">文档驱动开发，预留 Stable Diffusion AI 设计引擎接口，具备可扩展性</div>
+        </div>
+
+        <div class="project-stack" style="margin-top:1.25rem;">
+          <span class="stack-tag">Java 17</span>
+          <span class="stack-tag">Spring Boot 3</span>
+          <span class="stack-tag">Spring Data JPA</span>
+          <span class="stack-tag">MySQL</span>
+          <span class="stack-tag">Vue 3</span>
+          <span class="stack-tag">TypeScript</span>
+          <span class="stack-tag">Element Plus</span>
+          <span class="stack-tag">Pinia</span>
+          <span class="stack-tag">Android</span>
+          <span class="stack-tag">Retrofit2</span>
+          <span class="stack-tag">WebSocket</span>
+        </div>
+      </div>
+
+      <div style="padding-top:2.5rem; display:flex; flex-direction:column; gap:1rem; min-width:180px;">
+        <div style="background:rgba(0,217,184,0.06);border:1px solid rgba(0,217,184,0.2);border-radius:8px;padding:1rem;text-align:center;">
+          <div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:700;color:var(--accent);">100%</div>
+          <div style="font-size:12px;color:var(--muted);">消息触达率</div>
+        </div>
+        <div style="background:rgba(127,90,240,0.06);border:1px solid rgba(127,90,240,0.2);border-radius:8px;padding:1rem;text-align:center;">
+          <div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:700;color:#a78bfa;">3</div>
+          <div style="font-size:12px;color:var(--muted);">端 (Web/Android/后台)</div>
+        </div>
+        <div style="background:rgba(255,107,107,0.06);border:1px solid rgba(255,107,107,0.2);border-radius:8px;padding:1rem;text-align:center;">
+          <div style="font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:700;color:#fca5a5;">0</div>
+          <div style="font-size:12px;color:var(--muted);">并发数据冲突</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Novel AI -->
+    <div class="project-card fade-in">
+      <div class="project-meta">
+        <span class="project-type">AI · 个人项目</span>
+        <div class="project-links">
+          <a href="https://github.com/Tieamone/novel-ai" target="_blank" class="project-link" title="GitHub">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="project-title">Novel AI</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);margin-bottom:0.75rem;">AI 集成项目</div>
+
+      <p class="project-desc">
+        集成 AI 能力的项目，探索大语言模型与应用场景的结合，对接在线 AI 接口，提升智能化交互体验。
+      </p>
+
+      <div class="project-stack">
+        <span class="stack-tag">AI API</span>
+        <span class="stack-tag">Java</span>
+        <span class="stack-tag">Android</span>
+      </div>
+
+      <a href="https://github.com/Tieamone/novel-ai" target="_blank" style="display:inline-flex;align-items:center;gap:6px;margin-top:1.25rem;font-size:13px;color:var(--accent);text-decoration:none;">
+        查看源码 →
+      </a>
+    </div>
+
+    <!-- Gomoku -->
+    <div class="project-card fade-in">
+      <div class="project-meta">
+        <span class="project-type">Android · 独立开发</span>
+      </div>
+
+      <div class="project-title">安卓五子棋</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);margin-bottom:0.75rem;">2025.04</div>
+
+      <p class="project-desc">
+        独立开发的 Android 五子棋游戏，集成画图工具模块与小窗口视频功能，并对接 DeepSeek AI 接口实现 AI 对战，打包为可测试 Demo。
+      </p>
+
+      <div class="project-highlights">
+        <div class="highlight-item">AI 对接 DeepSeek 在线接口，实现智能 AI 博弈</div>
+        <div class="highlight-item">创新集成画图工具与小窗口视频功能</div>
+        <div class="highlight-item">从需求分析到打包全程独立完成</div>
+      </div>
+
+      <div class="project-stack" style="margin-top:1rem;">
+        <span class="stack-tag">Android</span>
+        <span class="stack-tag">Java</span>
+        <span class="stack-tag">DeepSeek API</span>
+        <span class="stack-tag">Material Design</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- EXPERIENCE -->
+<section id="experience">
+  <div class="section-tag">04 &nbsp; experience</div>
+  <h2>工作经历</h2>
+
+  <div class="timeline fade-in">
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-period">2025.09 — 2026.01</div>
+      <div class="timeline-company">武汉晶音科技有限公司</div>
+      <div class="timeline-role">
+        Java 后端开发
+        <span class="role-badge">实习</span>
+      </div>
+      <div class="timeline-content">
+        <ul class="timeline-list">
+          <li>主导小程序后端从 PHP/FastAdmin 到 Java/Spring Boot 的完整重构，实现接口统一与服务模块化</li>
+          <li>规范 GitLab 开发流程，推动代码评审机制，完成 v1.0.0、v1.0.82、v1.0.83 等核心版本上线</li>
+          <li>负责后台管理系统权限管理、数据配置、业务流程引擎等核心功能模块开发</li>
+          <li>建立前后端联调协作机制，指导团队新人掌握开发流程与编码标准</li>
+          <li>针对乙方代码合并冲突提出解决方案，持续优化接口响应性能与系统稳定性</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- EDUCATION -->
+<section id="education">
+  <div class="section-tag">05 &nbsp; education</div>
+  <h2>教育背景</h2>
+
+  <div class="edu-card fade-in">
+    <div>
+      <div class="edu-school">武汉生物工程学院</div>
+      <div class="edu-degree">计算机应用技术 · 大专</div>
+      <div class="edu-rank">⭐ 专业排名前 5%</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:0.75rem;">在校担任班长 · 多个个人项目已在 GitHub 开源</div>
+      <div style="font-size:12px;color:var(--faint);margin-bottom:0.5rem;font-family:'JetBrains Mono',monospace;">// 主修课程</div>
+      <div class="edu-courses">
+        <span class="edu-course">Web 前端技术</span>
+        <span class="edu-course">Java 程序设计</span>
+        <span class="edu-course">Android 开发</span>
+        <span class="edu-course">数据库设计</span>
+        <span class="edu-course">计算机基础</span>
+      </div>
+    </div>
+    <div>
+      <div class="edu-year">2023 — 2026</div>
+      <div style="margin-top:1rem;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);">26届 · 应届</div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- CONTACT -->
+<section id="contact" class="contact-section" style="max-width:100%; padding: 6rem 0;">
+  <div style="max-width:1100px; margin:0 auto; padding: 0 4rem;">
+    <div class="contact-grid">
+      <div class="fade-in">
+        <div class="section-tag">06 &nbsp; contact</div>
+        <div class="contact-heading">
+          Let's <span class="accent">Connect</span>
+        </div>
+        <p class="contact-desc">
+          目前正在寻找 Java / Android 全职机会，期望城市深圳、武汉、广州。
+          如果你觉得我们可以合作，欢迎随时联系！
+        </p>
+        <div class="hero-btns">
+          <a href="mailto:138******08@163.com" class="btn btn-primary">发邮件联系</a>
+        </div>
+      </div>
+
+      <div class="contact-links fade-in">
+        <a href="https://github.com/Tieamone" target="_blank" class="contact-link">
+          <div class="contact-link-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+          </div>
+          <div>
+            <div class="contact-link-label">GitHub</div>
+            <div class="contact-link-value">github.com/Tieamone</div>
+          </div>
+        </a>
+
+        <a href="tel:15800000083" class="contact-link">
+          <div class="contact-link-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.6 3.44 2 2 0 0 1 3.57 1.25h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.75a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </div>
+          <div>
+            <div class="contact-link-label">手机</div>
+            <div class="contact-link-value">13895308608</div>
+          </div>
+        </a>
+
+        <a href="mailto:138******08@163.com" class="contact-link">
+          <div class="contact-link-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <div>
+            <div class="contact-link-label">邮箱</div>
+            <div class="contact-link-value">13895308608@163.com</div>
+          </div>
+        </a>
+
+        <div class="contact-link" style="cursor:default;">
+          <div class="contact-link-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div>
+            <div class="contact-link-label">期望城市</div>
+            <div class="contact-link-value">深圳 · 武汉 · 广州</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>Built with ❤️ by 龚曦 &nbsp;·&nbsp; Java / Android Developer &nbsp;·&nbsp; 2026</div>
+</footer>
+
+<script>
+  // Typing animation
+  const phrases = [
+    'Java Backend Developer',
+    'Android Native Developer',
+    'Full-Stack Engineer',
+    'Spring Boot · Vue 3 · Android'
+  ];
+
+  let pIdx = 0, cIdx = 0, deleting = false;
+  const el = document.getElementById('typed');
+
+  function type() {
+    const current = phrases[pIdx];
+    if (!deleting) {
+      el.textContent = current.slice(0, ++cIdx);
+      if (cIdx === current.length) {
+        deleting = true;
+        setTimeout(type, 1800);
+        return;
+      }
+    } else {
+      el.textContent = current.slice(0, --cIdx);
+      if (cIdx === 0) {
+        deleting = false;
+        pIdx = (pIdx + 1) % phrases.length;
+      }
+    }
+    setTimeout(type, deleting ? 60 : 90);
+  }
+  type();
+
+  // Scroll fade-in
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+  // Smooth nav active state
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('nav a');
+
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 120) current = s.id;
+    });
+    navLinks.forEach(a => {
+      a.style.color = a.getAttribute('href') === '#' + current
+        ? 'var(--accent)'
+        : 'var(--muted)';
+    });
+  });
+</script>
+
+</body>
+</html>

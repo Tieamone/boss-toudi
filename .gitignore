@@ -1,0 +1,7 @@
+# 环境变量（含API Key）
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
