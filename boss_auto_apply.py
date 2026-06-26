@@ -162,6 +162,7 @@ CONFIG = {
     "require_keywords": ["设计", "美工", "视觉", "插画"],  # 白名单：职位名必须含其一才投递
     "skip_if_not_active": True,
     "max_salary_k": 15,  # 薪资上限（K），超过此值跳过。设为 0 关闭薪资过滤。
+    "min_salary_k": 5,  # 薪资下限（K），低于此值跳过。设为 0 关闭薪资过滤。
     "min_fit_score": 28,  # 岗位适配最低分；越高越精确但会少投，设为 0 关闭适配分过滤。
     "skip_anonymous_headhunter_jobs": True,  # 跳过匿名代招/猎头岗，避免聊天页无法按真实公司校验
     "chat_contact_scan_limit": 8,       # fallback 聊天列表最多检查几项，防止被新消息挤下去后长时间空转
@@ -178,7 +179,7 @@ CONFIG = {
     "log_file": "boss_apply_log.csv",
     "app_log_file": "boss_auto_apply.log",
     "browser_port": 9222,
-    "test_mode": True,
+    "test_mode": False,
 }
 
 # ══════════════════════════════════════════════
@@ -194,9 +195,10 @@ AI_CONFIG = {
     "api_retry": 1,
     "trust_env": _env_bool("MIMO_TRUST_ENV", False),
     "post_send_delay": 2,
-    "typing_char_delay": 0.5,
+    "typing_char_delay": 0.1,
     "blog_url": "http://124.222.207.22/portfolio",
     "enabled": bool(_mimo_api_key) and _mimo_ai_enabled,
+    "jd_relevance_filter_enabled": True,
 }
 
 # ══════════════════════════════════════════════
@@ -991,6 +993,7 @@ def call_mimo_api(job_desc: str, profile: dict, is_campus: bool = True,
         "严格按用户要求输出中文 Boss 直聘首条沟通消息（仅正文一段），不要输出额外解释。"
         "以求职者第一人称、口语化、自然真诚的语气输出，不暴露 AI 身份，"
         "不出现\"作为 AI\"\"我是 AI 助手\"等表述。"
+        "不要使用\"你好\"\"您好\"等问候语开头，直接进入正文内容。"
     )
     payload = {
         "model": AI_CONFIG["model"],
@@ -1046,6 +1049,96 @@ def call_mimo_api(job_desc: str, profile: dict, is_campus: bool = True,
             log.warning(f"    ⚠️ {hint}")
         log.info("    🧯 使用本地兜底招呼语：AI调用失败")
         return fallback_message
+
+def judge_job_relevance_by_ai(position: str, company: str, job_desc: str,
+                              core_stack: str) -> tuple[bool, str, list]:
+    """调用 mimo 模型判断岗位 JD 是否与候选人掌握的工具/能力相关。
+    返回 (是否相关, 原因, 命中的未掌握工具列表)。
+    API 失败时默认放行（返回 True），不阻断投递。
+    """
+    if not AI_CONFIG["enabled"]:
+        return True, "AI未启用，默认放行", []
+    if not job_desc or not job_desc.strip():
+        return True, "JD为空，默认放行", []
+
+    prompt = f"""你是一个求职筛选助手。请根据以下岗位信息，判断该岗位是否与候选人掌握的工具和能力相关。
+
+【候选人掌握的工具栈】
+{core_stack}
+
+【目标岗位】
+公司：{company or "目标公司"}
+职位：{position or "未知职位"}
+
+【职位描述（JD）】
+{job_desc[:800]}
+
+【判断规则】
+1. 如果 JD 核心要求包含候选人不掌握的工具（如 CAD、3D Max、酷家乐、SolidWorks、UG、ProE、Creo、Revit、BIM、Rhino、AutoCAD、SketchUp、V-Ray、KeyShot、ZBrush、Blender、Maya 等三维/工程/建筑软件），判定为"无关"。
+2. 如果岗位方向是室内设计、建筑设计、机械设计、工业设计、服装设计、景观设计、环境设计、结构设计等与视觉传达设计不符的方向，判定为"无关"。
+3. 如果 JD 要求的主要工具均在候选人掌握范围内（Photoshop、Illustrator、C4D、After Effects、Adobe XD、剪映，以及 GPT-image2、Nano Banana、Seedream、即梦、豆包、lovart 等 AI 设计工具），判定为"相关"。
+4. 如果 JD 主要要求匹配候选人能力，仅在"加分项/了解即可"中提到候选人不掌握的工具，判定为"相关"。
+5. 候选人是视觉传达设计方向，擅长平面、品牌、UI、电商、信息可视化等视觉设计。
+
+【输出格式（严格遵守）】
+第一行：通过 或 跳过（通过=相关，跳过=无关）
+第二行：原因（一句话说明）
+第三行：未掌握的工具列表（用顿号分隔，若无则写"无"）
+
+只输出这三行，不要输出任何其他内容。"""
+
+    system_prompt = (
+        "你是求职筛选助手，负责判断岗位 JD 与候选人能力是否匹配。"
+        "严格按照指定格式输出三行内容，不要输出额外解释。"
+    )
+    payload = {
+        "model": AI_CONFIG["model"],
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt},
+        ],
+        "max_completion_tokens": 512,
+        "temperature": 0.3,
+        "top_p": 0.9,
+        "stream": False,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+    }
+    try:
+        result = _call_mimo_api(payload, timeout=AI_CONFIG.get("api_timeout", 25),
+                                retries=AI_CONFIG.get("api_retry", 1))
+        choice = result["choices"][0]
+        raw_message = (choice.get("message") or {}).get("content") or ""
+        message = raw_message.strip()
+        message = re.sub(r"<think>.*?</think>", "", message, flags=re.IGNORECASE | re.DOTALL).strip()
+        message = re.sub(r"^```(?:text|markdown)?\s*|\s*```$", "", message, flags=re.IGNORECASE).strip()
+
+        if not message:
+            log.warning("    ⚠️ AI JD相关性判断返回空内容，默认放行")
+            return True, "AI返回空内容，默认放行", []
+
+        lines = [ln.strip() for ln in message.splitlines() if ln.strip()]
+        if not lines:
+            return True, "AI输出无法解析，默认放行", []
+
+        verdict_line = lines[0]
+        is_relevant = "跳过" not in verdict_line and ("通过" in verdict_line or "相关" in verdict_line)
+        reason = lines[1] if len(lines) > 1 else ""
+        missing_tools_str = lines[2] if len(lines) > 2 else "无"
+        missing_tools = [t.strip() for t in re.split(r"[、,，]", missing_tools_str) if t.strip() and t.strip() != "无"]
+
+        if not is_relevant:
+            log.info(f"    🚫 AI判定JD不相关：{reason}（未掌握工具：{missing_tools_str}）")
+        else:
+            log.info(f"    ✅ AI判定JD相关：{reason}")
+        return is_relevant, reason, missing_tools
+    except Exception as e:
+        hint = _mimo_error_hint(e)
+        log.warning(f"    ⚠️ AI JD相关性判断调用失败: {e}")
+        if hint:
+            log.warning(f"    ⚠️ {hint}")
+        log.info("    🧯 AI判断失败，默认放行")
+        return True, "AI判断接口失败，默认放行", []
 
 # ══════════════════════════════════════════════
 # 主类
@@ -1562,6 +1655,55 @@ class BossApplier:
                     }
                     return '';
                 }
+                function decodeSalaryText(node) {
+                    function decode(child) {
+                        if (child.nodeType === 3) {
+                            return child.nodeValue || '';
+                        }
+                        if (child.nodeType !== 1) {
+                            return '';
+                        }
+                        var cls = child.className;
+                        if (cls && typeof cls === 'object' && cls.baseVal !== undefined) {
+                            cls = cls.baseVal;
+                        }
+                        cls = String(cls || '');
+                        var m = cls.match(/icon-num-(\\d)/);
+                        if (m) return m[1];
+                        if (/icon-num-point|icon-num-dot/.test(cls)) return '.';
+                        if (/icon-num-minus|icon-num-dash/.test(cls)) return '-';
+                        if (/icon-num-/.test(cls)) return '';
+                        var content = '';
+                        try {
+                            content = window.getComputedStyle(child, '::before').content || '';
+                        } catch (e) {
+                            content = '';
+                        }
+                        if (content && content !== 'none' && content !== 'normal') {
+                            var text = String(content);
+                            var out = '';
+                            for (var k = 0; k < text.length; k++) {
+                                var code = text.charCodeAt(k);
+                                if (code >= 0xE031 && code <= 0xE03A) {
+                                    out += String(code - 0xE031);
+                                } else {
+                                    out += text.charAt(k);
+                                }
+                            }
+                            return out;
+                        }
+                        var sub = '';
+                        for (var j = 0; j < child.childNodes.length; j++) {
+                            sub += decode(child.childNodes[j]);
+                        }
+                        return sub;
+                    }
+                    var result = '';
+                    for (var i = 0; i < node.childNodes.length; i++) {
+                        result += decode(node.childNodes[i]);
+                    }
+                    return result.replace(/\\s+/g, ' ').trim();
+                }
                 function firstHref(selectors) {
                     for (var s = 0; s < selectors.length; s++) {
                         var node = this.querySelector(selectors[s]);
@@ -1581,7 +1723,7 @@ class BossApplier:
                         '[class*="company"] a', '[class*="company"] [class*="name"]',
                         'a[href*="/gongsi/"]', 'a[href*="/company/"]'
                     ], true),
-                    salary: firstText.call(this, ['.salary', '.red.salary', '[class*="salary"]'], false),
+                    salary: (function(){ var n = this.querySelector('.salary') || this.querySelector('[class*="salary"]'); return n ? decodeSalaryText(n) : ''; }).call(this),
                     hr_name: firstText.call(this, ['.boss-name', '.info-public', '[class*="boss-name"]'], false),
                     hr_active: firstText.call(this, ['.boss-active-time', '.active-time', '[class*="boss-active-time"]'], false),
                     href: firstHref.call(this, ['a.job-card-left', 'a[href*="/job_detail/"]', 'a'])
@@ -2741,6 +2883,10 @@ class BossApplier:
                         pass
                     break
             self._delay(0.8, 1.5)
+            try:
+                chat_input.run_js("this.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:arguments[0]}))", ai_message)
+            except Exception:
+                pass
             send_btn = (tab.ele("css:.btn-send", timeout=1)
                         or tab.ele("text=发送", timeout=1)
                         or tab.ele('xpath://*[text()="发送"]', timeout=1)
@@ -2754,6 +2900,14 @@ class BossApplier:
             else:
                 chat_input.key_down("Enter")
                 chat_input.key_up("Enter")
+            # 概率性失效兜底：再追加一次 Enter 键发送
+            try:
+                chat_input.click()
+                self._delay(0.1, 0.2)
+                chat_input.key_down("Enter")
+                chat_input.key_up("Enter")
+            except Exception:
+                pass
             self._delay(AI_CONFIG["post_send_delay"], AI_CONFIG["post_send_delay"] + 1)
             log.info("    💬 AI消息发送成功！")
             return True
@@ -2875,6 +3029,30 @@ class BossApplier:
                 log.info("    🎓 检测到校招/应届岗，使用学生版简历")
             else:
                 log.info("    💼 检测到社招岗，使用项目/实习经历口径")
+
+            if AI_CONFIG["enabled"] and AI_CONFIG.get("jd_relevance_filter_enabled", True):
+                log.info("    🤖 正在用AI判断JD与候选人能力是否相关...")
+                is_relevant, ai_reason, missing_tools = judge_job_relevance_by_ai(
+                    record.position, record.company, job_desc,
+                    RESUME_BASE_FACTS.get("core_stack", ""),
+                )
+                if not is_relevant:
+                    tools_text = "、".join(missing_tools) if missing_tools else "未列出"
+                    reason = f"AI判定JD不相关：{ai_reason}（未掌握工具：{tools_text}）"
+                    if self.cfg.get("test_mode", False):
+                        print("\n" + "═" * 60)
+                        print("【测试模式】AI JD 相关性筛选 → 跳过（不投递）")
+                        print(f"公司：{record.company} | 职位：{record.position} | HR：{record.hr_name or '-'}")
+                        print("─" * 60)
+                        print(f"AI判定：跳过")
+                        print(f"原因：{ai_reason}")
+                        print(f"未掌握工具：{tools_text}")
+                        print("═" * 60 + "\n")
+                    log.info(f"    ⏭  跳过 → {reason}")
+                    record.status, record.reason = "skipped", reason
+                    self._save_record(record)
+                    detail_tab.close()
+                    return False
 
             apply_btn = (detail_tab.ele("css:.btn-startchat", timeout=2)
                          or detail_tab.ele("立即沟通", timeout=2)
@@ -3030,6 +3208,11 @@ class BossApplier:
             salary_upper = _parse_salary_upper_bound_k(record.salary)
             if salary_upper is not None and salary_upper > max_salary:
                 return f"薪资过高（{record.salary}，上限 {salary_upper}K > {max_salary}K）"
+        min_salary = self.cfg.get("min_salary_k", 0)
+        if min_salary > 0:
+            salary_lower_bound = _parse_salary_upper_bound_k(record.salary)
+            if salary_lower_bound is not None and salary_lower_bound < min_salary:
+                return f"薪资过低（{record.salary}，下限 {salary_lower_bound}K < {min_salary}K）"
         combined = (record.position + " " + record.company).lower()
         for kw in self.cfg["skip_keywords"]:
             if kw.lower() in combined:
@@ -3052,6 +3235,7 @@ if __name__ == "__main__":
     print("  Boss直聘 自动投递 v22 (视觉传达设计-王文静)")
     print(f"  AI模型: {AI_CONFIG['model']}")
     print(f"  AI打招呼: {'已启用' if AI_CONFIG['enabled'] else '已关闭'}")
+    print(f"  AI JD筛选: {'已启用' if (AI_CONFIG['enabled'] and AI_CONFIG.get('jd_relevance_filter_enabled', True)) else '已关闭'}")
     print(f"  排序模式: scene={CONFIG['scene_param']} (3=最新, 1=推荐)")
     print(f"  经验要求: {'校招/应届' if CONFIG['is_campus_recruitment'] else '全岗位（自动识别校招/社招）'}")
     print(f"  投递间隔: {CONFIG['apply_interval_min']}~{CONFIG['apply_interval_max']}s")

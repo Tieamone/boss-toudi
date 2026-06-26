@@ -1,0 +1,7 @@
+- [x] `_job_card_snapshot` 的 JS 中实现 iconfont 解码（`icon-num-0`~`icon-num-9`、`icon-num-point`、`icon-num-minus`），并兼容已有明文薪资
+- [x] snapshot `salary` 字段在卡片含 iconfont 数字时能返回完整的 `7-10K` 形式（不再返回 `-K`）→ 离线 5 用例测试全 PASS
+- [x] `_send_message` 逐字输入后追加 `dispatchEvent(new InputEvent('input', ...))` 触发 Boss 框架感知
+- [x] `_send_message` 在 send 按钮点击后无条件追加 Enter 键兜底发送
+- [x] 函数返回值语义保持不变（流程正常返回 True，异常返回 False），不新增 disabled/清空校验
+- [x] `python -c "import ast; ast.parse(...)"` 通过，无语法错误 → SYNTAX_OK
+- [ ] 实际运行（非 test_mode）至少一条投递，日志中薪资字段为完整数字+K，AI 招呼语确实发出 → 需用户在真实浏览器环境验证（不应由 AI 自动发送真实消息给真实 HR）

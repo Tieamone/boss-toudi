@@ -1,0 +1,12 @@
+- [x] `judge_job_relevance_by_ai` 函数已实现，签名 `(position, company, job_desc, core_stack) -> tuple[bool, str, list]`
+- [x] AI 判断 prompt 包含职位名、JD、候选人掌握工具栈，要求识别候选人不掌握的工具（CAD/3D Max/酷家乐/SolidWorks/UG/ProE/Revit/BIM 等）并据此判定相关性
+- [x] AI 输出格式为"首行 通过/跳过 + 后续原因"，用 regex 解析；复用 `<think>` 与 code block 清理逻辑
+- [x] API 调用失败时默认放行 `(True, ...)`，记录 warning 日志，不阻断全部投递
+- [x] `AI_CONFIG` 新增 `jd_relevance_filter_enabled` 字段，默认 `True`
+- [x] `_process_job_card` 中 AI 相关性筛选位于本地适配分检查之后、查找沟通按钮之前
+- [x] AI 判定无关时：标记 `skipped`、记录原因、关闭详情页、返回 False，不生成招呼语、不投递
+- [x] AI 判定相关时：日志输出原因，继续后续投递流程
+- [x] test_mode 下 AI 筛选照常执行；判定无关时终端用 `═`/`─` 分隔符输出判定结果，不打印招呼语
+- [x] 仅当 `AI_CONFIG["enabled"]` 且 `jd_relevance_filter_enabled` 均为 True 时执行筛选
+- [x] `python -c "import ast; ast.parse(...)"` 通过，无语法错误
+- [x] 启动日志中体现 AI JD 筛选开关状态
