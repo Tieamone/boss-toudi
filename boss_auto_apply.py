@@ -84,11 +84,11 @@ def _normalize_mimo_base_url(raw_url: str) -> str:
 CONFIG = {
     # ── 关键词（短词，覆盖面更广）──────────────────────────────
     "keywords": [
-        "UI设计",
-        "视觉设计",
-        "品牌设计",
+         "品牌设计",
         "平面设计",
         "信息可视化",
+        "UI设计",
+        "视觉设计",
         "剪辑师",
         "产品设计",
         "电商设计",
@@ -121,22 +121,47 @@ CONFIG = {
     "skip_keywords": [
         # 非设计类岗位
         "销售", "运营", "客服", "行政", "财务", "会计", "人事", "HR",
-        "产品经理", "市场", "采购", "物流", "仓储",
-        # 开发/技术类岗位
-        "程序员", "开发工程师", "算法工程师", "测试工程师", "运维工程师",
-        "后端", "前端", "Java", "Python", "Android", "iOS",
-        "嵌入式", "数据库", "DBA", "架构师",
+        "产品经理", "市场", "采购", "物流", "仓储","游戏ui设计",
+
         # 硬件 / 电气 / 机械
         "硬件工程师", "电气工程师", "机械工程师", "结构工程师",
         "电子工程师", "单片机", "PCB", "射频", "芯片",
+        "机械", "结构设计",
+        # 机械与建筑工程设计
+"机械设计", "结构设计", "模具设计", "暖通设计", "给排水设计", 
+"管道设计", "消防设计", "机电设计", "钢结构设计", "幕墙设计",
+# 软件架构与逻辑
+"架构设计", "数据库设计", "算法设计", "顶层设计", "流程设计",
+
+# 游戏策划类（游戏行业常把策划称为设计）
+"关卡设计", "数值设计", "系统设计", "战斗设计", "剧情设计",
+# 细分产品设计
+"面料设计", "鞋样设计", "鞋履设计", "箱包设计", "珠宝设计", 
+"首饰设计", "玩具设计", "家具设计", "软装设计",
+
+# 容易混淆的边界词
+"包装结构设计", # 注意：区别于你可能要投的"包装视觉设计"或"包装平面设计"
+# 动画与特效
+"动画设计", "特效设计", "角色设计", "场景设计", "动作设计", "分镜设计",
+"课程设计", "教学设计", "问卷设计", "薪酬设计", "制度设计",
+# 工程/建筑/电路软件
+"CAD", "AutoCAD", "SolidWorks", "ProE", "Creo", "BIM", "Revit", "Altium", "Rhino" ,
+# 电子与半导体设计
+"电路设计", "IC设计", "芯片设计", "PCB设计", "射频设计", "天线设计",
+        # 非视觉设计类（含"设计"但方向不符）
+        "工业设计", "服装设计", "男装", "女装", "童装",
+        "室内设计", "建筑设计", "环境设计", "园林", "景观",
+        "工艺设计", "电气设计", "硬件设计",
+        # 机械建模软件
+        "ug",
         # 纯剪辑/3D（非综合设计岗）
          "3D建模师",
         # 外包 / 驻场
         "外包", "驻场", "外派",
     ],
-    "require_keywords": [],             # 留空=不限制，否则职位名必须含其中之一
+    "require_keywords": ["设计", "美工", "视觉", "插画"],  # 白名单：职位名必须含其一才投递
     "skip_if_not_active": True,
-    "max_salary_k": 12,  # 薪资上限（K），超过此值跳过。设为 0 关闭薪资过滤。
+    "max_salary_k": 15,  # 薪资上限（K），超过此值跳过。设为 0 关闭薪资过滤。
     "min_fit_score": 28,  # 岗位适配最低分；越高越精确但会少投，设为 0 关闭适配分过滤。
     "skip_anonymous_headhunter_jobs": True,  # 跳过匿名代招/猎头岗，避免聊天页无法按真实公司校验
     "chat_contact_scan_limit": 8,       # fallback 聊天列表最多检查几项，防止被新消息挤下去后长时间空转
@@ -153,6 +178,7 @@ CONFIG = {
     "log_file": "boss_apply_log.csv",
     "app_log_file": "boss_auto_apply.log",
     "browser_port": 9222,
+    "test_mode": True,
 }
 
 # ══════════════════════════════════════════════
@@ -164,24 +190,25 @@ AI_CONFIG = {
     "base_url": _normalize_mimo_base_url(
         os.environ.get("MIMO_BASE_URL") or os.environ.get("MIMO_API_URL") or "https://api.xiaomimimo.com/v1"
     ),
-    "api_timeout": 25,
-    "api_retry": 0,
+    "api_timeout": 120,
+    "api_retry": 1,
     "trust_env": _env_bool("MIMO_TRUST_ENV", False),
     "post_send_delay": 2,
+    "typing_char_delay": 0.5,
     "blog_url": "http://124.222.207.22/portfolio",
     "enabled": bool(_mimo_api_key) and _mimo_ai_enabled,
 }
 
 # ══════════════════════════════════════════════
-# 简历画像配置（依据根目录《龚曦-互联网.pdf》整理）
+# 这些没必要 简历画像配置（依据根目录《龚曦-互联网.pdf》整理）
 # 换使用对象时按这个模板改：
 # - RESUME_BASE_FACTS：候选人的专业、目标、核心经历、沟通边界
 # - 每个 RESUME_PROFILES 条目：岗位方向、匹配词、偏好词、负面词、技能、证据、禁用话术
 # - PROFILE_PRIORITY：画像优先级，越靠前越先抢同分岗位
 # ══════════════════════════════════════════════
 RESUME_BASE_FACTS = {
-    "summary": "2026届武汉生物工程学院视觉传达设计本科，作品风格偏向简洁、柔和、低饱和和情绪化表达；作品集涵盖 UI 界面设计（余光APP）、品牌视觉识别（甜序低糖甜品）、信息可视化（全球文化迁徙史）等方向。",
-    "core_stack": "Photoshop、Illustrator、After Effects、Adobe XD、剪映，以及 GPT-image2、Nano Banana、即梦、豆包、lovart 等 AI 设计工具。",
+    "summary": "2026届武汉生物工程学院视觉传达设计本科，作品风格偏向简洁、柔和、低饱和和情绪化表达；作品集涵盖 UI 界面设计（余光APP）、品牌视觉识别（甜序低糖甜品）、信息可视化（全球文化迁徙史）等方向；曾参与亚马逊电商设计实习，了解电商平台视觉规范、产品卖点表达和商业页面设计逻辑；具备基础摄影能力，能辅助完成产品拍摄、素材整理和后期处理。",
+    "core_stack": "Photoshop、Illustrator、C4D、After Effects、Adobe XD、剪映，以及 GPT-image2、Nano Banana、Seedream、即梦、豆包、lovart 等 AI 设计工具。",
     "communication_rules": "只使用简历中存在的项目事实；不主动暴露手机号、邮箱、期望薪资；社招岗位不主动强调在校/应届，但不要编造正式多年工作经历或知名品牌合作经历；JD中未掌握的能力以愿意学习方向表达，不硬说自己做过。",
 }
 
@@ -192,7 +219,7 @@ RESUME_PROFILES = {
         "preferred_keywords": ["ui", "ux", "交互", "用户体验", "app", "界面", "原型", "xd", "ae", "剪映"],
         "negative_keywords": ["前端开发", "后端", "java", "python", "android", "ios", "嵌入式", "硬件", "算法"],
         "target_job": "UI/UX设计师",
-        "skills": "Photoshop、Illustrator、After Effects、Adobe XD、剪映、用户调研、信息架构、低保真/高保真原型、IP形象设计。",
+        "skills": "Photoshop、Illustrator、C4D、After Effects、Adobe XD、剪映、用户调研、信息架构、低保真/高保真原型、IP形象设计。",
         "campus_pitch": "应届口径：做过一款心理健康疗愈类APP「余光」，从用户调研、竞品分析到视觉风格设定、界面设计、IP形象设计完整走了一遍流程，通过低饱和色彩和水彩插画降低用户心理压力。",
         "experienced_pitch": "项目经历口径：突出「余光」APP完整设计流程、用户调研到高保真原型交付、IP形象设计能力，不主动强调学生身份。",
         "proof_points": [
@@ -208,7 +235,7 @@ RESUME_PROFILES = {
         "preferred_keywords": ["品牌", "vi", "cis", "logo", "标识", "视觉识别", "品牌延伸", "应用系统", "标准色"],
         "negative_keywords": ["前端开发", "后端", "java", "python", "android", "嵌入式", "硬件", "算法", "纯摄影"],
         "target_job": "品牌设计/视觉设计",
-        "skills": "Photoshop、Illustrator、品牌命名定位、Logo设计、色彩字体规范、VI应用系统设计、品牌延伸展示。",
+        "skills": "Photoshop、Illustrator、C4D、品牌命名定位、Logo设计、色彩字体规范、VI应用系统设计、品牌延伸展示。",
         "campus_pitch": "应届口径：做过一套完整的低糖甜品品牌视觉识别系统「甜序」，从品牌命名、理念、Logo设计到标准色规范、辅助图形、应用延展完整落地。",
         "experienced_pitch": "项目经历口径：突出「甜序」品牌VIS全流程落地、从命名到应用系统完整交付、品牌延伸和物料适配能力。",
         "proof_points": [
@@ -224,7 +251,7 @@ RESUME_PROFILES = {
         "preferred_keywords": ["信息可视化", "数据可视化", "信息图", "数据设计", "图表", "时间轴", "矩阵图", "雷达图"],
         "negative_keywords": ["纯插画", "纯摄影", "前端开发", "后端", "java", "python", "数据分析师", "算法"],
         "target_job": "信息可视化/数据设计",
-        "skills": "Photoshop、Illustrator、信息层级梳理、图表样式设计、版面排版、视觉统一。",
+        "skills": "Photoshop、Illustrator、C4D、信息层级梳理、图表样式设计、版面排版、视觉统一。",
         "campus_pitch": "应届口径：做过一个全球文化迁徙史的信息可视化项目，通过时间轴、地图、矩阵图、雷达图等多种图表方式整合复杂历史信息。",
         "experienced_pitch": "项目经历口径：突出信息可视化多类型图表组合、信息层级梳理、视觉秩序感能力。",
         "proof_points": [
@@ -240,13 +267,13 @@ RESUME_PROFILES = {
         "preferred_keywords": ["电商", "详情页", "运营设计", "美工", "卖点", "版式", "视觉风格"],
         "negative_keywords": ["纯文案", "纯运营", "前端开发", "后端", "java", "python", "算法", "数据分析师"],
         "target_job": "电商/运营设计",
-        "skills": "Photoshop、Illustrator、剪映、UI界面设计、品牌视觉识别、版式设计、视觉风格把控。",
-        "campus_pitch": "应届口径：作品风格偏向简洁柔和，UI界面设计、品牌视觉识别、版式设计能力可以迁移到电商视觉方向，愿意快速学习详情页和运营视觉的专项要求。",
-        "experienced_pitch": "项目经历口径：突出UI界面设计、品牌视觉识别、版式设计能力的可迁移性，表达愿意学习电商专项要求。",
+        "skills": "Photoshop、Illustrator、C4D、剪映、UI界面设计、品牌视觉识别、版式设计、视觉风格把控。",
+        "campus_pitch": "应届口径：曾参与亚马逊电商设计实习，了解电商平台视觉规范、产品卖点表达和商业页面设计逻辑，具备一定的电商视觉执行能力；UI界面设计、品牌视觉识别、版式设计能力可迁移到电商视觉方向。",
+        "experienced_pitch": "项目经历口径：曾参与亚马逊电商设计实习，了解电商平台视觉规范、产品卖点表达和商业页面设计逻辑；UI界面设计、品牌视觉识别、版式设计能力可迁移到电商详情页和运营视觉设计。",
         "proof_points": [
+            "亚马逊电商设计实习：了解电商平台视觉规范、产品卖点表达和商业页面设计逻辑，具备一定的电商视觉执行能力。",
             "可迁移能力：UI界面设计、品牌视觉识别、版式设计能力可迁移到电商详情页和运营视觉设计。",
             "设计风格：作品风格偏向简洁、柔和、低饱和和情绪化表达，适合电商视觉及新媒体视觉相关岗位。",
-            "学习意愿：电商详情页和运营视觉虽无直接项目，但具备快速学习设计工具和持续优化作品的能力。",
         ],
         "avoid_claims": ["不要虚构千万级GMV或爆款详情页数据", "不要声称有大型电商团队主视觉经验", "不要说自己精通视频剪辑或后期特效", "不要虚构RNW、百雀羚等具体品牌详情页项目经历"],
     },
@@ -256,7 +283,7 @@ RESUME_PROFILES = {
         "preferred_keywords": ["平面", "视觉传达", "海报", "包装", "画册", "物料", "排版", "版式"],
         "negative_keywords": ["销售", "运营", "客服", "行政", "财务", "开发", "硬件", "电气", "机械", "算法"],
         "target_job": "综合视觉/平面设计",
-        "skills": "Photoshop、Illustrator、After Effects、Adobe XD、剪映、UI界面设计、品牌视觉识别、版式设计、信息可视化设计、IP形象设计。",
+        "skills": "Photoshop、Illustrator、C4D、After Effects、Adobe XD、剪映、UI界面设计、品牌视觉识别、版式设计、信息可视化设计、IP形象设计。",
         "campus_pitch": "应届口径：作品涵盖UI界面设计、品牌视觉识别、信息可视化等方向，风格偏向简洁柔和低饱和，PS、AI、AE、XD、剪映都比较熟练。",
         "experienced_pitch": "项目经历口径：突出多元设计能力、从调研到高保真输出的完整流程把控能力。",
         "proof_points": [
@@ -272,7 +299,7 @@ RESUME_PROFILES = {
         "preferred_keywords": ["设计", "视觉", "平面", "ui", "品牌", "海报", "包装"],
         "negative_keywords": ["销售", "运营", "客服", "行政", "财务", "硬件", "结构", "电气", "开发", "算法"],
         "target_job": "视觉传达设计",
-        "skills": "Photoshop、Illustrator、After Effects、Adobe XD、剪映、UI界面设计、品牌视觉识别、版式设计、信息可视化设计、IP形象设计。",
+        "skills": "Photoshop、Illustrator、C4D、After Effects、Adobe XD、剪映、UI界面设计、品牌视觉识别、版式设计、信息可视化设计、IP形象设计。",
         "campus_pitch": "应届口径：作品涵盖UI界面设计、品牌视觉识别、信息可视化等方向，风格偏向简洁柔和低饱和，PS、AI、AE、XD、剪映都比较熟练。",
         "experienced_pitch": "项目经历口径：突出多元设计能力、从调研到高保真输出的完整流程把控能力。",
         "proof_points": [
@@ -436,6 +463,27 @@ def _parse_salary_upper_bound_k(salary_text: str) -> float | None:
     if numbers:
         return max(float(n) for n in numbers)
     return None
+
+def _strip_salary_from_position(position: str) -> str:
+    """从职位名中剥离薪资相关子串（底薪、K区间、面议、元/天月等）。"""
+    text = str(position or "")
+    if not text:
+        return text
+    patterns = [
+        r'无责任底薪',
+        r'底薪',
+        r'\d+(?:\.\d+)?\s*[Kk]?\s*[-–~]\s*\d+(?:\.\d+)?\s*[Kk]',
+        r'\d+(?:\.\d+)?\s*[Kk]',
+        r'面议',
+        r'\d+\s*元/[天月]',
+        r'元/[天月]',
+        r'薪资\d+',
+    ]
+    cleaned = text
+    for pat in patterns:
+        cleaned = re.sub(pat, '', cleaned)
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+    return cleaned if cleaned else text
 
 def select_resume_profile(position: str, company: str, job_desc: str,
                            search_keyword: str = "") -> tuple:
@@ -755,6 +803,43 @@ def _select_relevant_proof_points(profile: dict, requirements: list[dict], limit
                 break
     return matched[:limit]
 
+def _match_jd_tools(job_desc: str, core_stack: str) -> list[str]:
+    """检索 JD 中提及的、候选人已掌握的工具，返回命中工具列表（含别名匹配）。"""
+    if not job_desc or not core_stack:
+        return []
+    jd_lower = (job_desc or "").lower()
+
+    # 候选人掌握的工具及其常见别名（小写匹配）
+    tool_aliases = {
+        "Photoshop": ["photoshop", "ps"],
+        "Illustrator": ["illustrator", "ai"],
+        "C4D": ["c4d", "cinema 4d", "cinema4d"],
+        "After Effects": ["after effects", "ae", "aftereffect"],
+        "Adobe XD": ["xd", "adobe xd"],
+        "剪映": ["剪映"],
+        "GPT-image2": ["gpt-image2", "gpt image2", "gptimage2"],
+        "Nano Banana": ["nano banana", "nanobanana"],
+        "Seedream": ["seedream"],
+        "即梦": ["即梦"],
+        "豆包": ["豆包"],
+        "lovart": ["lovart"],
+    }
+
+    # 仅保留 core_stack 中确实出现的工具
+    core_lower = core_stack.lower()
+    candidate_tools = []
+    for tool, aliases in tool_aliases.items():
+        if any(alias in core_lower for alias in aliases):
+            candidate_tools.append(tool)
+
+    # 检索 JD 中提及的、候选人已掌握的工具
+    matched = []
+    for tool in candidate_tools:
+        aliases = tool_aliases[tool]
+        if any(alias in jd_lower for alias in aliases):
+            matched.append(tool)
+    return matched
+
 def _format_requirements_for_prompt(requirements: list[dict]) -> str:
     if not requirements:
         return "- 未提取到明确技术要求，请围绕职位名和当前画像选择最稳妥的匹配点。"
@@ -799,20 +884,27 @@ def _shorten_text(text: str, max_len: int = 72) -> str:
 
 def _build_local_fallback_greeting(position: str, profile: dict,
                                    requirements: list[dict],
-                                   proof_points: list[str]) -> str:
-    target = _shorten_text(position or profile.get("target_job", "这个岗位"), 24)
-    req_text = "、".join(item["label"] for item in requirements[:2]) or profile.get("target_job", "设计岗位")
-    proof = _shorten_text(proof_points[0] if proof_points else "", 60)
+                                   proof_points: list[str],
+                                   is_campus: bool = True) -> str:
+    target = _shorten_text(position or profile.get("target_job", "视觉设计岗位"), 24)
+    req_text = "、".join(item["label"] for item in requirements[:2]) or "品牌视觉、UI界面设计、信息可视化"
     skills = _shorten_text(profile.get("skills", ""), 42)
-    if proof:
-        return (
-            f"看到{target}偏{req_text}，我的{skills[:30] or profile.get('target_job', '视觉传达设计')}能力可以匹配相关要求，"
-            f"{proof}让我对这类设计有实际理解，能尽快上手。期待进一步交流。"
-        )
-    return (
-        f"看到{target}偏{req_text}，我的{skills or profile.get('target_job', '视觉传达设计')}能力可以匹配相关要求，"
-        f"愿意快速学习岗位专项要求，期待进一步交流。"
+
+    if is_campus:
+        opening = f"您好，我是2026届视觉传达设计本科生，想应聘贵公司的{target}岗位。"
+    else:
+        opening = f"您好，我具备视觉传达设计背景，想应聘贵公司的{target}岗位。"
+
+    body = (
+        f"{opening}\n"
+        f"我会使用 Photoshop、Illustrator、C4D、AE、XD、剪映等设计工具，"
+        "也能结合 GPT-image2、Nano Banana、Seedream 等 AI 工具进行创意发散、视觉生成、素材优化和设计提效。\n"
+        f"我的作品方向包含{req_text}等内容，具备一定的版式设计、色彩搭配、视觉风格统一和品牌调性把控能力，"
+        "也希望有机会加入团队参与实际项目。\n"
+        "期待能进一步沟通，谢谢！"
     )
+
+    return body
 
 def _append_blog_url(message: str) -> str:
     message = str(message or "").strip()
@@ -828,13 +920,15 @@ def call_mimo_api(job_desc: str, profile: dict, is_campus: bool = True,
 
     # 根据校招/社招切换身份描述和 AI 提示
     if is_campus:
-        identity = "你是一名视觉传达设计专业应届生，需要在Boss直聘上向HR发送第一条打招呼消息。"
+        identity = "你是一名2026届视觉传达设计本科应届生，需要在Boss直聘上向HR发送第一条打招呼消息。"
+        opening_rule = '招呼语正文必须以「您好，我是2026届视觉传达设计本科生，想应聘贵公司的{position}岗位。」开头。'
         extra_hint = (
             "- 可以自然提到应届、实习、可到岗，但不要显得低姿态\n"
             "- 重点写作品集事实和能上手的设计能力点\n"
         )
     else:
         identity = "你是一名有完整作品集的视觉传达设计求职者，需要在Boss直聘上向HR发送第一条打招呼消息。"
+        opening_rule = '招呼语正文必须以「您好，我具备视觉传达设计背景，想应聘贵公司的{position}岗位。」开头。'
         extra_hint = (
             "- 不要提及任何学校、在校、应届、实习等字眼\n"
             "- 可以说设计项目经历、作品交付经历，但不要虚构正式工作年限、公司规模、团队管理、知名品牌合作、国际大奖\n"
@@ -842,7 +936,9 @@ def call_mimo_api(job_desc: str, profile: dict, is_campus: bool = True,
     profile_facts = _format_profile_facts(profile, is_campus)
     requirements = _extract_job_requirements(position, job_desc)
     relevant_proofs = _select_relevant_proof_points(profile, requirements)
-    fallback_message = _build_local_fallback_greeting(position, profile, requirements, relevant_proofs)
+    matched_tools = _match_jd_tools(job_desc, RESUME_BASE_FACTS.get("core_stack", ""))
+    matched_tools_text = "、".join(matched_tools) if matched_tools else "无明确命中"
+    fallback_message = _build_local_fallback_greeting(position, profile, requirements, relevant_proofs, is_campus)
     log.info(
         "    🧩 岗位关键词: "
         + ("、".join(item["label"] for item in requirements) if requirements else "未提取到明确关键词")
@@ -852,12 +948,15 @@ def call_mimo_api(job_desc: str, profile: dict, is_campus: bool = True,
 
 【目标岗位】
 公司：{company or "目标公司"}
-职位：{position or profile.get('target_job', '软件开发')}
+职位：{position or profile.get('target_job', '视觉传达设计')}
 
 【岗位关键要求（必须优先回应）】
 {_format_requirements_for_prompt(requirements)}
 
-【只能引用的真实项目证据】
+【JD 中提及且我已掌握的工具（着重讲）】
+{matched_tools_text}
+
+【真实项目证据（仅供理解背景，不得在招呼语中提及项目名）】
 {_format_proofs_for_prompt(relevant_proofs)}
 
 【我的能力画像】
@@ -866,24 +965,32 @@ def call_mimo_api(job_desc: str, profile: dict, is_campus: bool = True,
 【目标职位描述】
 {job_desc[:800]}
 
+【输出格式（严格遵守）】
+只输出一段招呼语正文（约200-280字），按以下四段结构生成：
+1. 自我介绍 + 「想应聘贵公司的{position or profile.get('target_job', '视觉传达设计')}岗位」
+2. 工具能力：列出我会的设计工具（Photoshop、Illustrator、C4D、After Effects、Adobe XD、剪映）和 AI 工具（GPT-image2、Nano Banana、Seedream、即梦、豆包、lovart），并说明用途（创意发散、视觉生成、素材优化、设计提效）。JD 中命中的工具着重讲。
+3. 作品方向与能力：列出设计方向（品牌视觉、包装物料、App UI设计、信息可视化、海报及视觉延展等），体现版式设计、色彩搭配、视觉风格统一和品牌调性把控能力。不要提及具体项目名称。
+4. 对岗位具体工作的兴趣 + 期待进一步沟通，谢谢。
+{opening_rule}
+
 【生成规则】
-- 必须先回应“岗位关键要求”里的至少1项，再自然引出“只能引用的真实项目证据”
-- 重点体现“我为什么能胜任这个岗位”，不要只复述我的简历画像
-- 写成一段自然的Boss直聘首条沟通消息，正文80~120字；稍后系统会另附作品集链接
-- 结构：先回应岗位关键要求并匹配我的能力 → 自然引出相关项目证据（不要直接以“我的毕业设计是…”或“在校期间我做了…”开头）→ 匹配的技术点或愿意学习的方向 → 期待进一步交流
-- JD中要求但我未掌握的能力，以“愿意学习/可快速上手/之前接触过相关思路”方向表达，不要硬说自己做过
-- 不要直接以“我的毕业设计是…”或“在校期间我做了…”开头，先回应岗位需求再自然引出项目证据
+- {opening_rule}
+- 必须使用上方「目标岗位」中的实际职位名「{position or profile.get('target_job', '视觉传达设计')}」填充「想应聘贵公司的XX岗位」，不得使用「视觉设计/品牌设计/电商设计/UI设计相关岗位」等硬编码列表
+- JD 中提及且我已掌握的工具着重讲；我不会的工具不要编造，以「愿意学习」方向表达
+- 不要在招呼语中提及具体项目名称（如「余光」「甜序」等作品集项目名），只概括列设计方向
+- 不要直接以「我的毕业设计是…」或「在校期间我做了…」开头
 - 只写证据中已经出现的经历和能力；JD里有但证据里没有的能力，不要硬说自己做过
 - 不要堆砌技能名，不要写成简历摘要，不要像模板
-- 开头不要用“您好”，不要称呼“贵司”超过1次
-- 不要出现“精通”“资深”“负责过千万级/高并发”“Nginx排障”等无法证明的夸大表述
-{extra_hint}- 不要加任何额外解释，直接输出消息正文
+- 不要出现「精通」「资深」「负责过千万级/高并发」等无法证明的夸大表述
+{extra_hint}- 不要加任何额外解释，直接输出一段内容
 
-请直接输出打招呼消息："""
+请直接输出打招呼消息（仅正文一段）："""
 
     system_prompt = (
-        "你是 MiMo，Xiaomi 开发的 AI 助手。"
-        "请严格按用户要求输出中文 Boss 直聘首条沟通消息，不要输出额外解释。"
+        "你是正在 Boss 直聘求职的设计师本人，要根据简历事实给 HR 写第一条打招呼消息。"
+        "严格按用户要求输出中文 Boss 直聘首条沟通消息（仅正文一段），不要输出额外解释。"
+        "以求职者第一人称、口语化、自然真诚的语气输出，不暴露 AI 身份，"
+        "不出现\"作为 AI\"\"我是 AI 助手\"等表述。"
     )
     payload = {
         "model": AI_CONFIG["model"],
@@ -891,7 +998,7 @@ def call_mimo_api(job_desc: str, profile: dict, is_campus: bool = True,
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt},
         ],
-        "max_completion_tokens": 1024,
+        "max_completion_tokens": 4096,
         "temperature": 0.8,
         "top_p": 0.95,
         "stream": False,
@@ -919,20 +1026,18 @@ def call_mimo_api(job_desc: str, profile: dict, is_campus: bool = True,
             )
             if finish_reason == "length":
                 log.warning(
-                    "    ⚠️ 诊断：max_completion_tokens 可能过小，reasoning 模型思考 token 占用过多，"
-                    "正文无 token 输出。当前已调大为 1024，如仍失败请进一步增大或更换非 reasoning 模型。"
+                    "    ⚠️ 诊断：reasoning 模型思考 token 占用过多，正文无 token 输出。"
+                    "如仍失败请进一步增大 max_completion_tokens 或更换非 reasoning 模型。"
                 )
             log.info("    🧯 使用本地兜底招呼语：AI返回空内容")
-            return _append_blog_url(fallback_message)
+            return fallback_message
 
         is_valid, invalid_reason = _validate_ai_greeting(message, requirements)
         if not is_valid:
             log.warning(f"    ⚠️ AI招呼语校验未通过: {invalid_reason}")
             log.info("    🧯 使用本地兜底招呼语")
-            return _append_blog_url(fallback_message)
+            return fallback_message
 
-        message = _append_blog_url(message)
-        
         return message
     except Exception as e:
         hint = _mimo_error_hint(e)
@@ -940,7 +1045,7 @@ def call_mimo_api(job_desc: str, profile: dict, is_campus: bool = True,
         if hint:
             log.warning(f"    ⚠️ {hint}")
         log.info("    🧯 使用本地兜底招呼语：AI调用失败")
-        return _append_blog_url(fallback_message)
+        return fallback_message
 
 # ══════════════════════════════════════════════
 # 主类
@@ -1240,7 +1345,8 @@ class BossApplier:
             max_per_day = self.cfg.get("max_apply_per_day", 50)
             campus_str = "校招/应届" if self.cfg.get("is_campus_recruitment") else "全部经验"
             ai_status = "已启用" if AI_CONFIG["enabled"] else "已关闭"
-            log.info(f"🎉 准备就绪！scene={self.active_scene} | 经验要求={campus_str} | AI={ai_status} | 每日上限={max_per_day}")
+            test_status = "开启（只生成不发送）" if self.cfg.get("test_mode", False) else "关闭"
+            log.info(f"🎉 准备就绪！scene={self.active_scene} | 经验要求={campus_str} | AI={ai_status} | 每日上限={max_per_day} | 测试模式={test_status}")
 
             if AI_CONFIG["enabled"]:
                 self._test_api_connection()
@@ -2620,8 +2726,20 @@ class BossApplier:
             chat_input.click()
             self._delay(0.5, 1.0)
             chat_input.clear()
-            log.info("    ⌨️ 正在模拟真人输入AI消息...")
-            chat_input.input(ai_message)
+            log.info("    ⌨️ 正在逐字模拟真人输入AI消息...")
+            _typed = []
+            for ch in ai_message:
+                self._delay(AI_CONFIG["typing_char_delay"], AI_CONFIG["typing_char_delay"])
+                try:
+                    chat_input.input(ch)
+                    _typed.append(ch)
+                except Exception as e:
+                    log.warning(f"    ⚠️ 逐字输入异常，回退一次性输入剩余文本: {e}")
+                    try:
+                        chat_input.input(ai_message[len("".join(_typed)):])
+                    except Exception:
+                        pass
+                    break
             self._delay(0.8, 1.5)
             send_btn = (tab.ele("css:.btn-send", timeout=1)
                         or tab.ele("text=发送", timeout=1)
@@ -2657,7 +2775,8 @@ class BossApplier:
         try:
             snapshot = self._job_card_snapshot(card)
 
-            record.position = snapshot.get("position") or _get_text(self._find_job_name(card)) or "未知职位"
+            raw_position = snapshot.get("position") or _get_text(self._find_job_name(card)) or "未知职位"
+            record.position = _strip_salary_from_position(raw_position)
             record.company = snapshot.get("company") or _get_text(self._find_company_name(card)) or "未知公司"
             record.salary = snapshot.get("salary") or _get_full_text(self._find_salary(card)) or "未知薪资"
             raw_hr_name = snapshot.get("hr_name") or _get_text(self._find_hr_name(card))
@@ -2780,6 +2899,18 @@ class BossApplier:
                     log.info(f"    💡 AI生成内容: {ai_message[:60]}...")
                 else:
                     log.info("    ⚠️ AI生成失败，将仅发送默认招呼语")
+
+            if self.cfg.get("test_mode", False):
+                print("\n" + "═" * 60)
+                print(f"【测试模式】AI 招呼语（不发送、不投递）")
+                print(f"公司：{record.company} | 职位：{record.position} | HR：{record.hr_name or '-'}")
+                print("─" * 60)
+                print(ai_message if ai_message else "（AI 生成失败，无招呼语）")
+                print("═" * 60 + "\n")
+                record.status, record.reason = "test_only", "test_mode 未发送"
+                self._save_record(record)
+                detail_tab.close()
+                return False
 
             apply_btn.run_js("this.scrollIntoView({block:'center'})")
             self._delay(0.3, 0.5)
