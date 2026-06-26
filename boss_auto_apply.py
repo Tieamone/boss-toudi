@@ -84,16 +84,16 @@ def _normalize_mimo_base_url(raw_url: str) -> str:
 CONFIG = {
     # ── 关键词（短词，覆盖面更广）──────────────────────────────
     "keywords": [
-         "品牌设计",
-        "平面设计",
-        "信息可视化",
-        "UI设计",
-        "视觉设计",
-        "剪辑师",
-        "产品设计",
         "电商设计",
         "美工",
+        "UI设计",
+        "平面设计",
+        "信息可视化",
+        "视觉设计",
+        "剪辑师",
+        "产品设计",   
         "ip设计",
+        "品牌设计", 
         "文创设计",
         "平面设计师",
     ],
@@ -115,39 +115,39 @@ CONFIG = {
     # scene=3: 最新（按发布时间倒序，手机端「最新」tab对应值）
     # 启动时会自动嗅探验证是否生效，失败则回退 scene=1
     "scene_param": "3",
-    "scene_sniff_verify": True,        # True=启动时验证 scene=3 是否真实生效
+    "scene_sniff_verify": False,        # True=启动时验证 scene=3 是否真实生效
 
     # ── 过滤规则──────────────────────────────────────────────
     "skip_keywords": [
         # 非设计类岗位
         "销售", "运营", "客服", "行政", "财务", "会计", "人事", "HR",
         "产品经理", "市场", "采购", "物流", "仓储","游戏ui设计",
-
+        "音效", "音频设计", "声音设计", "游戏音频",
         # 硬件 / 电气 / 机械
         "硬件工程师", "电气工程师", "机械工程师", "结构工程师",
         "电子工程师", "单片机", "PCB", "射频", "芯片",
         "机械", "结构设计",
         # 机械与建筑工程设计
-"机械设计", "结构设计", "模具设计", "暖通设计", "给排水设计", 
-"管道设计", "消防设计", "机电设计", "钢结构设计", "幕墙设计",
-# 软件架构与逻辑
-"架构设计", "数据库设计", "算法设计", "顶层设计", "流程设计",
+        "机械设计", "结构设计", "模具设计", "暖通设计", "给排水设计", 
+        "管道设计", "消防设计", "机电设计", "钢结构设计", "幕墙设计",
+        # 软件架构与逻辑
+        "架构设计", "数据库设计", "算法设计", "顶层设计", "流程设计",
 
-# 游戏策划类（游戏行业常把策划称为设计）
-"关卡设计", "数值设计", "系统设计", "战斗设计", "剧情设计",
-# 细分产品设计
-"面料设计", "鞋样设计", "鞋履设计", "箱包设计", "珠宝设计", 
-"首饰设计", "玩具设计", "家具设计", "软装设计",
+        # 游戏策划类（游戏行业常把策划称为设计）
+        "关卡设计", "数值设计", "系统设计", "战斗设计", "剧情设计",
+        # 细分产品设计
+        "面料设计", "鞋样设计", "鞋履设计", "箱包设计", "珠宝设计", 
+        "首饰设计", "玩具设计", "家具设计", "软装设计", 
 
-# 容易混淆的边界词
-"包装结构设计", # 注意：区别于你可能要投的"包装视觉设计"或"包装平面设计"
-# 动画与特效
-"动画设计", "特效设计", "角色设计", "场景设计", "动作设计", "分镜设计",
-"课程设计", "教学设计", "问卷设计", "薪酬设计", "制度设计",
-# 工程/建筑/电路软件
-"CAD", "AutoCAD", "SolidWorks", "ProE", "Creo", "BIM", "Revit", "Altium", "Rhino" ,
-# 电子与半导体设计
-"电路设计", "IC设计", "芯片设计", "PCB设计", "射频设计", "天线设计",
+        # 容易混淆的边界词
+        "包装结构设计", # 注意：区别于你可能要投的"包装视觉设计"或"包装平面设计"    
+        # 动画与特效
+        "动画设计", "特效设计", "角色设计", "场景设计", "动作设计", "分镜设计",
+        "课程设计", "教学设计", "问卷设计", "薪酬设计", "制度设计",
+        # 工程/建筑/电路软件
+        "CAD", "AutoCAD", "SolidWorks", "ProE", "Creo", "BIM", "Revit", "Altium", "Rhino" ,
+        # 电子与半导体设计
+        "电路设计", "IC设计", "芯片设计", "PCB设计", "射频设计", "天线设计",    
         # 非视觉设计类（含"设计"但方向不符）
         "工业设计", "服装设计", "男装", "女装", "童装",
         "室内设计", "建筑设计", "环境设计", "园林", "景观",
@@ -157,6 +157,29 @@ CONFIG = {
         # 纯剪辑/3D（非综合设计岗）
          "3D建模师",
         # 外包 / 驻场
+        "外包", "驻场", "外派",
+    ],
+    "jd_skip_keywords": [
+        # 音频/音效专业软件（出现在JD里说明是音频岗，不是视觉设计）
+        "Cubase", "Reaper", "Wwise", "Protools", "Pro Tools", "DAW", "混音", "音效制作", "音频制作",
+        # 工程/建筑/电气软件（JD里出现代表岗位需要这类工具）
+        "CAD", "AutoCAD", "SolidWorks", "ProE", "Creo", "BIM", "Revit", "Altium", "Rhino",
+        # 机械/建筑设计方向词
+        "机械设计", "结构设计", "模具设计", "暖通设计", "给排水设计",
+        "管道设计", "消防设计", "机电设计", "钢结构设计", "幕墙设计",
+        # 非视觉设计方向
+        "室内设计", "建筑设计", "环境设计", "园林", "景观",
+        "工业设计", "服装设计", "面料设计", "鞋样设计", "鞋履设计",
+        "箱包设计", "珠宝设计", "首饰设计", "玩具设计", "家具设计", "软装设计",
+        "包装结构设计",
+        # 游戏策划类（JD里出现代表是策划岗不是设计岗）
+        "关卡设计", "数值设计", "战斗设计", "剧情设计",
+        # 电子/半导体
+        "电路设计", "IC设计", "芯片设计", "PCB设计", "射频设计", "天线设计",
+        "电气设计", "硬件设计",
+        # 机械建模软件
+        "ug",
+        # 外包/驻场
         "外包", "驻场", "外派",
     ],
     "require_keywords": ["设计", "美工", "视觉", "插画"],  # 白名单：职位名必须含其一才投递
@@ -198,7 +221,7 @@ AI_CONFIG = {
     "typing_char_delay": 0.1,
     "blog_url": "http://124.222.207.22/portfolio",
     "enabled": bool(_mimo_api_key) and _mimo_ai_enabled,
-    "jd_relevance_filter_enabled": True,
+    "jd_relevance_filter_enabled": False,
 }
 
 # ══════════════════════════════════════════════
@@ -2146,7 +2169,6 @@ class BossApplier:
             "css:.job-detail-card .job-sec-text", "css:.job-sec-text",
             "css:.job-detail-section", "css:.job-description", "css:.detail-content",
             'xpath://*[contains(@class,"job-sec-text")]',
-            'xpath://*[contains(@class,"job-sec") and not(contains(@class,"job-sec-keyword"))]',
         ]
         best_text = ""
         for sel in selectors:
@@ -2156,12 +2178,12 @@ class BossApplier:
                     text = ele.text.strip()
                     if len(text) > len(best_text):
                         best_text = text
-                    if len(best_text) > 100:
-                        break
             except Exception:
                 continue
         if best_text:
             log.info(f"    📋 成功抓取职位描述（{len(best_text)}字）")
+            if len(best_text) < 30:
+                log.warning(f"    ⚠️ JD 过短（{len(best_text)}字），可能抓取不完整")
         else:
             log.warning("    ⚠️ 职位描述未找到")
         return best_text
@@ -2932,7 +2954,7 @@ class BossApplier:
             raw_position = snapshot.get("position") or _get_text(self._find_job_name(card)) or "未知职位"
             record.position = _strip_salary_from_position(raw_position)
             record.company = snapshot.get("company") or _get_text(self._find_company_name(card)) or "未知公司"
-            record.salary = snapshot.get("salary") or _get_full_text(self._find_salary(card)) or "未知薪资"
+            record.salary = _decode_boss_obfuscated_digits(snapshot.get("salary") or "") or _get_full_text(self._find_salary(card)) or "未知薪资"
             raw_hr_name = snapshot.get("hr_name") or _get_text(self._find_hr_name(card))
             record.hr_name = self._clean_hr_name(raw_hr_name, record.company, record.position)
             record.hr_active = snapshot.get("hr_active") or _get_text(self._find_hr_active(card))
@@ -3005,6 +3027,15 @@ class BossApplier:
                     return False
 
             job_desc = self._scrape_job_description(detail_tab)
+
+            jd_skip_reason = self._should_skip_by_jd(job_desc)
+            if jd_skip_reason:
+                log.info(f"    ⏭  跳过 → {jd_skip_reason}")
+                record.status, record.reason = "skipped", jd_skip_reason
+                self._save_record(record)
+                detail_tab.close()
+                return False
+
             job_is_campus = is_campus_job(job_desc, record.position)
             profile_key, profile = select_resume_profile(
                 record.position, record.company, job_desc,
@@ -3224,6 +3255,16 @@ class BossApplier:
             for hint in ["半年前", "一年前", "很久前"]:
                 if hint in record.hr_active:
                     return f"HR不活跃（{record.hr_active}）"
+        return ""
+
+    def _should_skip_by_jd(self, job_desc: str) -> str:
+        if not job_desc:
+            return ""
+        jd_lower = job_desc.lower()
+        jd_keywords = self.cfg.get("jd_skip_keywords", [])
+        for kw in jd_keywords:
+            if kw and kw.lower() in jd_lower:
+                return f"JD含跳过词「{kw}」"
         return ""
 
 
