@@ -82,14 +82,30 @@ def _normalize_mimo_base_url(raw_url: str) -> str:
 # 3) RESUME_BASE_FACTS/RESUME_PROFILES：候选人事实、画像、证明点和禁用话术
 # ══════════════════════════════════════════════
 CONFIG = {
-    # ── 关键词（短词，覆盖面更广）──────────────────────────────
-    "keywords": [
+    "workflow_mode": "industry_feed",  # industry_feed=从顶部行业列表投递；keyword_search=保留旧关键词搜索
+    "industry_tab_text": "设计(深圳)",
+    "target_job_keywords": [
+        "平面设计",
+        "视觉设计",
         "电商设计",
         "美工",
         "UI设计",
-        "平面设计",
         "信息可视化",
+        "剪辑师",
+        "产品设计",
+        "ip设计",
+        "品牌设计",
+        "文创设计",
+        "平面设计师",
+    ],
+    # ── 关键词（短词，覆盖面更广）──────────────────────────────
+    "keywords": [
+        "平面设计",
         "视觉设计",
+        "电商设计",
+        "美工",
+        "UI设计",
+        "信息可视化",
         "剪辑师",
         "产品设计",   
         "ip设计",
@@ -158,6 +174,12 @@ CONFIG = {
          "3D建模师",
         # 外包 / 驻场
         "外包", "驻场", "外派",
+    ],
+    "single_rest_keywords": [
+        "单休",
+        "做六休一", "上六休一", "六休一",
+        "周休1天", "周休一天", "一周休一天", "每周休一天",
+        "月休4天", "月休四天", "月休4", "月休四",
     ],
     "jd_skip_keywords": [
         # 音频/音效专业软件（出现在JD里说明是音频岗，不是视觉设计）
@@ -234,7 +256,7 @@ AI_CONFIG = {
 RESUME_BASE_FACTS = {
     "summary": "2026届武汉生物工程学院视觉传达设计本科，作品风格偏向简洁、柔和、低饱和和情绪化表达；作品集涵盖 UI 界面设计（余光APP）、品牌视觉识别（甜序低糖甜品）、信息可视化（全球文化迁徙史）等方向；曾参与亚马逊电商设计实习，了解电商平台视觉规范、产品卖点表达和商业页面设计逻辑；具备基础摄影能力，能辅助完成产品拍摄、素材整理和后期处理。",
     "core_stack": "Photoshop、Illustrator、C4D、After Effects、Adobe XD、剪映，以及 GPT-image2、Nano Banana、Seedream、即梦、豆包、lovart 等 AI 设计工具。",
-    "communication_rules": "只使用简历中存在的项目事实；不主动暴露手机号、邮箱、期望薪资；社招岗位不主动强调在校/应届，但不要编造正式多年工作经历或知名品牌合作经历；JD中未掌握的能力以愿意学习方向表达，不硬说自己做过。",
+    "communication_rules": "只使用简历中存在的项目事实；不主动暴露手机号、邮箱、期望薪资；社招岗位不主动强调在校/应届，但不要编造正式多年工作经历或知名品牌合作经历；JD中未掌握、无证据支撑的能力直接不提，不硬说自己做过，也不写愿意学习式补救表达。",
 }
 
 RESUME_PROFILES = {
@@ -896,6 +918,14 @@ def _validate_ai_greeting(message: str, requirements: list[dict]) -> tuple[bool,
     for risky in _RISKY_AI_CLAIMS:
         if risky.lower() in message.lower():
             return False, f"包含风险表述：{risky}"
+    gap_phrases = [
+        "不会", "不熟悉", "不太会", "还不太会",
+        "未掌握", "暂未掌握", "没有掌握",
+        "愿意学习", "愿意学", "可以学习", "可学习",
+    ]
+    for phrase in gap_phrases:
+        if phrase.lower() in message.lower():
+            return False, f"包含短板/学习表述：{phrase}"
     if not _message_mentions_job_requirement(message, requirements):
         labels = "、".join(item["label"] for item in requirements)
         return False, f"未回应岗位关键词：{labels}"
@@ -913,7 +943,6 @@ def _build_local_fallback_greeting(position: str, profile: dict,
                                    is_campus: bool = True) -> str:
     target = _shorten_text(position or profile.get("target_job", "视觉设计岗位"), 24)
     req_text = "、".join(item["label"] for item in requirements[:2]) or "品牌视觉、UI界面设计、信息可视化"
-    skills = _shorten_text(profile.get("skills", ""), 42)
 
     if is_campus:
         opening = f"您好，我是2026届视觉传达设计本科生，想应聘贵公司的{target}岗位。"
@@ -921,12 +950,10 @@ def _build_local_fallback_greeting(position: str, profile: dict,
         opening = f"您好，我具备视觉传达设计背景，想应聘贵公司的{target}岗位。"
 
     body = (
-        f"{opening}\n"
-        f"我会使用 Photoshop、Illustrator、C4D、AE、XD、剪映等设计工具，"
-        "也能结合 GPT-image2、Nano Banana、Seedream 等 AI 工具进行创意发散、视觉生成、素材优化和设计提效。\n"
-        f"我的作品方向包含{req_text}等内容，具备一定的版式设计、色彩搭配、视觉风格统一和品牌调性把控能力，"
-        "也希望有机会加入团队参与实际项目。\n"
-        "期待能进一步沟通，谢谢！"
+        f"{opening}"
+        f"我比较匹配的是{req_text}相关工作，平时主要使用 Photoshop、Illustrator、C4D、AE、XD、剪映等工具完成视觉设计和素材处理。"
+        "之前有电商设计实习经历，了解平台视觉规范、产品卖点表达和商业页面排版，也做过品牌视觉、UI界面和信息可视化方向的作品训练。"
+        "如果方便的话，期待进一步沟通，我也可以补充作品集给您参考，谢谢！"
     )
 
     return body
@@ -943,17 +970,19 @@ def call_mimo_api(job_desc: str, profile: dict, is_campus: bool = True,
     if not AI_CONFIG["enabled"]:
         return ""
 
+    target_position = position or profile.get('target_job', '视觉传达设计')
+
     # 根据校招/社招切换身份描述和 AI 提示
     if is_campus:
         identity = "你是一名2026届视觉传达设计本科应届生，需要在Boss直聘上向HR发送第一条打招呼消息。"
-        opening_rule = '招呼语正文必须以「您好，我是2026届视觉传达设计本科生，想应聘贵公司的{position}岗位。」开头。'
+        opening_rule = f'招呼语正文必须以「您好，我是2026届视觉传达设计本科生，想应聘贵公司的{target_position}岗位。」开头。'
         extra_hint = (
             "- 可以自然提到应届、实习、可到岗，但不要显得低姿态\n"
             "- 重点写作品集事实和能上手的设计能力点\n"
         )
     else:
         identity = "你是一名有完整作品集的视觉传达设计求职者，需要在Boss直聘上向HR发送第一条打招呼消息。"
-        opening_rule = '招呼语正文必须以「您好，我具备视觉传达设计背景，想应聘贵公司的{position}岗位。」开头。'
+        opening_rule = f'招呼语正文必须以「您好，我具备视觉传达设计背景，想应聘贵公司的{target_position}岗位。」开头。'
         extra_hint = (
             "- 不要提及任何学校、在校、应届、实习等字眼\n"
             "- 可以说设计项目经历、作品交付经历，但不要虚构正式工作年限、公司规模、团队管理、知名品牌合作、国际大奖\n"
@@ -973,7 +1002,7 @@ def call_mimo_api(job_desc: str, profile: dict, is_campus: bool = True,
 
 【目标岗位】
 公司：{company or "目标公司"}
-职位：{position or profile.get('target_job', '视觉传达设计')}
+职位：{target_position}
 
 【岗位关键要求（必须优先回应）】
 {_format_requirements_for_prompt(requirements)}
@@ -991,21 +1020,24 @@ def call_mimo_api(job_desc: str, profile: dict, is_campus: bool = True,
 {job_desc[:800]}
 
 【输出格式（严格遵守）】
-只输出一段招呼语正文（约200-280字），按以下四段结构生成：
-1. 自我介绍 + 「想应聘贵公司的{position or profile.get('target_job', '视觉传达设计')}岗位」
-2. 工具能力：列出我会的设计工具（Photoshop、Illustrator、C4D、After Effects、Adobe XD、剪映）和 AI 工具（GPT-image2、Nano Banana、Seedream、即梦、豆包、lovart），并说明用途（创意发散、视觉生成、素材优化、设计提效）。JD 中命中的工具着重讲。
-3. 作品方向与能力：列出设计方向（品牌视觉、包装物料、App UI设计、信息可视化、海报及视觉延展等），体现版式设计、色彩搭配、视觉风格统一和品牌调性把控能力。不要提及具体项目名称。
-4. 对岗位具体工作的兴趣 + 期待进一步沟通，谢谢。
+只输出一段招呼语正文（约120-180字），像真人给 HR 发第一条消息，不分段、不编号。
+内容顺序：
+1. 自我介绍 + 「想应聘贵公司的{target_position}岗位」
+2. 只回应 JD 里最关键的 2-3 个要求，优先写岗位真正需要的设计产出或工具
+3. 用一处真实经历/作品方向做支撑，但不要写成简历摘要
+4. 结尾自然表达期待沟通
 {opening_rule}
 
 【生成规则】
 - {opening_rule}
-- 必须使用上方「目标岗位」中的实际职位名「{position or profile.get('target_job', '视觉传达设计')}」填充「想应聘贵公司的XX岗位」，不得使用「视觉设计/品牌设计/电商设计/UI设计相关岗位」等硬编码列表
-- JD 中提及且我已掌握的工具着重讲；我不会的工具不要编造，以「愿意学习」方向表达
+- 必须使用上方「目标岗位」中的实际职位名「{target_position}」填充「想应聘贵公司的XX岗位」，不得使用「视觉设计/品牌设计/电商设计/UI设计相关岗位」等硬编码列表
+- JD 中提及且我已掌握的工具可以讲；证据里没有的工具和能力直接不提，不要写「不会」「不熟悉」「未掌握」「愿意学习」「可以学习」等短板或补救式表达
+- 不要每次列满 Photoshop、Illustrator、C4D、After Effects、Adobe XD、剪映和所有 AI 工具；只提与该 JD 最相关的 2-4 个工具
+- 不要每次都写「作品方向涵盖品牌视觉、包装物料、App UI设计、信息可视化、海报及视觉延展」这种固定清单；只挑最贴岗位的方向
 - 不要在招呼语中提及具体项目名称（如「余光」「甜序」等作品集项目名），只概括列设计方向
 - 不要直接以「我的毕业设计是…」或「在校期间我做了…」开头
 - 只写证据中已经出现的经历和能力；JD里有但证据里没有的能力，不要硬说自己做过
-- 不要堆砌技能名，不要写成简历摘要，不要像模板
+- 不要堆砌技能名，不要写成简历摘要，不要像模板；避免「我对视觉设计充满热情」「能够把控品牌调性」这类空泛套话
 - 不要出现「精通」「资深」「负责过千万级/高并发」等无法证明的夸大表述
 {extra_hint}- 不要加任何额外解释，直接输出一段内容
 
@@ -1016,7 +1048,7 @@ def call_mimo_api(job_desc: str, profile: dict, is_campus: bool = True,
         "严格按用户要求输出中文 Boss 直聘首条沟通消息（仅正文一段），不要输出额外解释。"
         "以求职者第一人称、口语化、自然真诚的语气输出，不暴露 AI 身份，"
         "不出现\"作为 AI\"\"我是 AI 助手\"等表述。"
-        "不要使用\"你好\"\"您好\"等问候语开头，直接进入正文内容。"
+        "不要提及自己不会、不熟悉、未掌握的内容，也不要用愿意学习、可以学习等补救式表达。"
     )
     payload = {
         "model": AI_CONFIG["model"],
@@ -1455,23 +1487,30 @@ class BossApplier:
             if not self._ensure_logged_in():
                 return False
 
-            # ── scene 验证 ──
-            self._sniff_and_verify_scene()
+            workflow_mode = self.cfg.get("workflow_mode", "keyword_search")
+            if workflow_mode == "industry_feed":
+                log.info(f"🧭 当前流程: 行业列表投递（{self.cfg.get('industry_tab_text', '设计(深圳)')}）")
+            else:
+                # ── scene 验证 ──
+                self._sniff_and_verify_scene()
 
             max_per_day = self.cfg.get("max_apply_per_day", 50)
             campus_str = "校招/应届" if self.cfg.get("is_campus_recruitment") else "全部经验"
             ai_status = "已启用" if AI_CONFIG["enabled"] else "已关闭"
             test_status = "开启（只生成不发送）" if self.cfg.get("test_mode", False) else "关闭"
-            log.info(f"🎉 准备就绪！scene={self.active_scene} | 经验要求={campus_str} | AI={ai_status} | 每日上限={max_per_day} | 测试模式={test_status}")
+            log.info(f"🎉 准备就绪！流程={workflow_mode} | scene={self.active_scene} | 经验要求={campus_str} | AI={ai_status} | 每日上限={max_per_day} | 测试模式={test_status}")
 
             if AI_CONFIG["enabled"]:
                 self._test_api_connection()
 
-            for keyword in self.cfg["keywords"]:
-                if self.daily_applied >= max_per_day:
-                    log.info(f"🛑 今日已达投递上限 ({max_per_day})，安全退出。")
-                    break
-                self._search_and_apply(keyword)
+            if workflow_mode == "industry_feed":
+                self._industry_feed_and_apply()
+            else:
+                for keyword in self.cfg["keywords"]:
+                    if self.daily_applied >= max_per_day:
+                        log.info(f"🛑 今日已达投递上限 ({max_per_day})，安全退出。")
+                        break
+                    self._search_and_apply(keyword)
 
             log.info(f"\n🎉 运行结束！本次共投递 {self.total_applied} 个岗位，今日累计 {self.daily_applied} 次")
 
@@ -1515,6 +1554,251 @@ class BossApplier:
                 log.warning(f"⚠️ {hint}")
             AI_CONFIG["enabled"] = False
             log.warning("⚠️ 本次运行已自动关闭 AI 打招呼，避免每个岗位重复 API 失败；修复账号/额度后重启脚本即可恢复。")
+
+    def _open_industry_feed(self) -> bool:
+        tab_text = self.cfg.get("industry_tab_text", "设计(深圳)")
+        target_url = "https://www.zhipin.com/web/geek/jobs"
+        log.info(f"\n{'='*40}")
+        log.info(f"🧭 打开行业职位流: {tab_text}")
+        log.info(f"{'='*40}")
+
+        self.main_tab.get(target_url)
+        self._delay(2, 4)
+        try:
+            self.main_tab.wait.ele_loaded("css:.job-card-wrapper", timeout=8)
+        except Exception:
+            pass
+
+        tab_ele = None
+        tab_selectors = [
+            f'xpath://*[normalize-space()="{tab_text}"]',
+            f'xpath://*[contains(normalize-space(), "{tab_text}")]',
+            f'text={tab_text}',
+        ]
+        for sel in tab_selectors:
+            try:
+                tab_ele = self.main_tab.ele(sel, timeout=3)
+                if tab_ele:
+                    break
+            except Exception:
+                continue
+
+        if not tab_ele:
+            log.warning(f"⚠️ 未找到顶部行业入口「{tab_text}」，将使用当前职位列表继续")
+        else:
+            try:
+                tab_ele.run_js("this.scrollIntoView({block:'center', inline:'center'});")
+            except Exception:
+                pass
+            try:
+                self.main_tab.actions.move_to(tab_ele).click()
+            except Exception:
+                try:
+                    tab_ele.click()
+                except Exception:
+                    tab_ele.run_js("this.click()")
+            self._delay(2, 4)
+
+        try:
+            self.main_tab.wait.ele_loaded(
+                'xpath://*[contains(@class, "job-name") or contains(@class, "job-card")]',
+                timeout=8,
+            )
+        except Exception:
+            pass
+
+        cards = self._get_job_cards()
+        if not cards:
+            log.warning("⚠️ 行业职位流未找到岗位卡片")
+            return False
+        log.info(f"✅ 行业职位流加载完成，当前可见 {len(cards)} 张岗位卡片")
+        return True
+
+    def _industry_feed_and_apply(self):
+        if not self._open_industry_feed():
+            return
+
+        max_per_day = self.cfg.get("max_apply_per_day", 50)
+        seen_card_keys = set()
+        stable_rounds = 0
+
+        def _card_keys(card_list: list) -> set:
+            keys = set()
+            for item in card_list:
+                key = self._job_card_key(item)
+                if key:
+                    keys.add(key)
+            return keys
+
+        cards = self._get_job_cards()
+        known_card_keys = _card_keys(cards)
+
+        while self.daily_applied < max_per_day and stable_rounds < 4:
+            cards = self._get_job_cards() or cards
+            next_card = None
+            next_key = ""
+            for card in cards:
+                card_key = self._job_card_key(card)
+                if card_key and card_key not in seen_card_keys:
+                    next_card = card
+                    next_key = card_key
+                    break
+
+            if not next_card:
+                self._scroll_job_list_step()
+                refreshed_cards = self._get_job_cards()
+                fresh_keys = _card_keys(refreshed_cards)
+                has_unseen = any(key and key not in seen_card_keys for key in fresh_keys)
+                if has_unseen:
+                    cards = refreshed_cards
+                    known_card_keys.update(fresh_keys)
+                    stable_rounds = 0
+                else:
+                    stable_rounds += 1
+                    log.info(f"  📄 行业列表暂无新卡片，继续滚动确认（{stable_rounds}/4）")
+                continue
+
+            try:
+                self._scroll_card_into_view(next_card)
+                applied = self._process_industry_job_card(next_card)
+                seen_card_keys.add(next_key)
+                if applied:
+                    self.total_applied += 1
+                    self.daily_applied += 1
+                self._scroll_job_list_step()
+                refreshed_cards = self._get_job_cards()
+                fresh_keys = _card_keys(refreshed_cards)
+                has_new_batch = any(key and key not in known_card_keys for key in fresh_keys)
+                if has_new_batch:
+                    cards = refreshed_cards
+                    known_card_keys.update(fresh_keys)
+                stable_rounds = 0
+            except Exception as e:
+                if "失效" in str(e) or "stale" in str(e).lower():
+                    log.warning("⚠️ 页面元素失效，重新获取卡片列表...")
+                    cards = self._get_job_cards()
+                    stable_rounds = 0
+                    continue
+                raise
+
+        if self.daily_applied >= max_per_day:
+            log.info(f"🛑 今日已达投递上限 ({max_per_day})，安全退出。")
+        else:
+            log.info("✅ 行业列表已滚动到稳定末尾，本轮结束。")
+
+    def _inline_detail_signature(self) -> str:
+        try:
+            return self.main_tab.run_js("""
+                var root = document.querySelector('.job-detail-card, .job-detail-container, .job-detail-box, .job-detail');
+                if (!root) return '';
+                var text = (root.innerText || root.textContent || '').replace(/\\s+/g, ' ').trim();
+                return text.slice(0, 160);
+            """) or ""
+        except Exception:
+            return ""
+
+    def _scrape_inline_detail_text(self) -> str:
+        try:
+            text = self.main_tab.run_js("""
+                var root = document.querySelector('.job-detail-card, .job-detail-container, .job-detail-box, .job-detail');
+                if (!root) root = document.body;
+                return (root.innerText || root.textContent || '').replace(/\\s+/g, ' ').trim();
+            """) or ""
+            return _decode_boss_obfuscated_digits(text)
+        except Exception:
+            return ""
+
+    def _click_card_and_scrape_inline_detail(self, card, expected_position: str = "") -> tuple[str, str]:
+        before_sig = self._inline_detail_signature()
+        try:
+            self.main_tab.actions.move_to(card).click()
+        except Exception:
+            try:
+                card.click()
+            except Exception:
+                try:
+                    card.run_js("this.click()")
+                except Exception:
+                    pass
+
+        deadline = time.time() + 6
+        detail_text = ""
+        expected_compact = re.sub(r"\s+", "", expected_position or "")
+        while time.time() < deadline:
+            self._delay(0.3, 0.6)
+            detail_text = self._scrape_inline_detail_text()
+            new_sig = self._inline_detail_signature()
+            detail_compact = re.sub(r"\s+", "", detail_text)
+            if (new_sig and new_sig != before_sig) or (expected_compact and expected_compact in detail_compact):
+                break
+
+        job_desc = self._scrape_job_description(self.main_tab)
+        if not detail_text:
+            detail_text = self._scrape_inline_detail_text()
+        return job_desc, detail_text
+
+    def _find_target_job_keyword(self, *texts: str) -> str:
+        combined = " ".join(str(text or "") for text in texts)
+        lower = combined.lower()
+        compact = re.sub(r"\s+", "", lower)
+        for kw in self.cfg.get("target_job_keywords", []):
+            keyword = str(kw or "").strip()
+            if not keyword:
+                continue
+            kw_lower = keyword.lower()
+            kw_compact = re.sub(r"\s+", "", kw_lower)
+            if kw_lower in lower or kw_compact in compact:
+                return keyword
+        return ""
+
+    def _process_industry_job_card(self, card) -> bool:
+        card_text = card.text or ""
+        if "已沟通" in card_text or "继续沟通" in card_text:
+            log.info("    ⏭  跳过 → UI界面已显示「已沟通」")
+            return False
+
+        snapshot = self._job_card_snapshot(card)
+        raw_position = snapshot.get("position") or _get_text(self._find_job_name(card)) or "未知职位"
+        position = _strip_salary_from_position(raw_position)
+        company = snapshot.get("company") or _get_text(self._find_company_name(card)) or "未知公司"
+        salary = _decode_boss_obfuscated_digits(snapshot.get("salary") or "") or _get_full_text(self._find_salary(card)) or "未知薪资"
+        record = JobRecord(
+            time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            city=self.cfg["city"],
+            position=position,
+            company=company,
+            salary=salary,
+            hr_active=snapshot.get("hr_active") or _get_text(self._find_hr_active(card)),
+        )
+        href = snapshot.get("href", "")
+        if href:
+            record.url = f"https://www.zhipin.com{href}" if href.startswith("/") else href
+
+        history_reason = self._history_skip_reason(record)
+        if history_reason:
+            log.info(f"    ⏭  跳过 → {history_reason}")
+            record.status, record.reason = "skipped", history_reason
+            self._save_record(record)
+            return False
+
+        log.info(f"    [行业列表] [{record.company}] {record.position}  {record.salary}")
+        inline_job_desc, inline_detail_text = self._click_card_and_scrape_inline_detail(card, record.position)
+        matched_keyword = self._find_target_job_keyword(record.position, card_text, inline_detail_text, inline_job_desc)
+        if not matched_keyword:
+            reason = "未命中目标岗位关键词"
+            log.info(f"    ⏭  跳过 → {reason}")
+            record.status, record.reason = "skipped", reason
+            self._save_record(record)
+            return False
+
+        log.info(f"    ✅ 命中目标岗位关键词「{matched_keyword}」，进入投递筛选")
+        return self._process_job_card(
+            card,
+            keyword=matched_keyword,
+            require_target_match=True,
+            preloaded_job_desc=inline_job_desc,
+            preloaded_detail_text=inline_detail_text,
+        )
 
     def _search_and_apply(self, keyword: str):
         city_code = CITY_CODES.get(self.cfg["city"], "101280600")
@@ -2180,6 +2464,29 @@ class BossApplier:
                         best_text = text
             except Exception:
                 continue
+        rest_lines = []
+        rest_keywords = [kw for kw in self.cfg.get("single_rest_keywords", []) if kw]
+        if rest_keywords:
+            try:
+                detail_text = detail_tab.run_js("""
+                    var root = document.querySelector('.job-detail-card, .job-detail-container, .job-detail-box, .job-detail');
+                    if (!root) root = document.body;
+                    return root.innerText || '';
+                """) or ""
+                for raw_line in detail_text.splitlines():
+                    line = re.sub(r"\s+", " ", raw_line).strip()
+                    if (
+                        line
+                        and "休" in line
+                        and any(kw in line for kw in rest_keywords)
+                        and line not in best_text
+                        and line not in rest_lines
+                    ):
+                        rest_lines.append(line)
+            except Exception:
+                pass
+        if rest_lines:
+            best_text = "\n".join([best_text, "补充休息信息：", *rest_lines]).strip()
         if best_text:
             log.info(f"    📋 成功抓取职位描述（{len(best_text)}字）")
             if len(best_text) < 30:
@@ -2885,6 +3192,186 @@ class BossApplier:
         log.info("    ↪️ 本轮未定位到可见聊天输入框")
         return None
 
+    def _message_check_fragments(self, message: str) -> list[str]:
+        compact = re.sub(r"\s+", "", str(message or ""))
+        if not compact:
+            return []
+        if len(compact) <= 36:
+            return [compact]
+        mid = max(0, len(compact) // 2 - 18)
+        fragments = [compact[:36], compact[mid:mid + 36], compact[-36:]]
+        return [frag for frag in fragments if len(frag) >= 12]
+
+    def _chat_history_text_without_editor(self, tab) -> str:
+        try:
+            text = tab.run_js("""
+                var root = (
+                    document.querySelector('.chat-main') ||
+                    document.querySelector('.chat-content') ||
+                    document.querySelector('.message-list') ||
+                    document.querySelector('.chat-message-list') ||
+                    document.querySelector('[class*="message-list"]') ||
+                    document.querySelector('[class*="chat"]') ||
+                    document.body
+                );
+                if (!root) return '';
+                var clone = root.cloneNode(true);
+                var removeSelectors = [
+                    '[contenteditable="true"]',
+                    'textarea',
+                    'input',
+                    '.chat-editor-area',
+                    '.chat-input',
+                    '.chat-textarea',
+                    '[class*="editor"]',
+                    '[class*="input"]',
+                    '[class*="search"]'
+                ];
+                removeSelectors.forEach(function(sel) {
+                    clone.querySelectorAll(sel).forEach(function(node) { node.remove(); });
+                });
+                return clone.innerText || clone.textContent || '';
+            """) or ""
+            return _decode_boss_obfuscated_digits(text)
+        except Exception:
+            return ""
+
+    def _chat_history_contains_ai_message(self, tab, ai_message: str) -> bool:
+        history_text = re.sub(r"\s+", "", self._chat_history_text_without_editor(tab))
+        fragments = self._message_check_fragments(ai_message)
+        if not history_text or not fragments:
+            return False
+        if len(fragments) == 1:
+            return fragments[0] in history_text
+        return sum(1 for frag in fragments if frag in history_text) >= 2
+
+    def _wait_ai_message_sent_visible(self, tab, ai_message: str, timeout: float = 8.0) -> bool:
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            if self._chat_history_contains_ai_message(tab, ai_message):
+                return True
+            time.sleep(0.8)
+        return False
+
+    def _editor_contains_message(self, chat_input, ai_message: str) -> bool:
+        try:
+            editor_text = chat_input.run_js("return (this.innerText || this.textContent || this.value || '');") or ""
+        except Exception:
+            editor_text = ""
+        compact_editor = re.sub(r"\s+", "", editor_text)
+        fragments = self._message_check_fragments(ai_message)
+        if not compact_editor or not fragments:
+            return False
+        if len(fragments) == 1:
+            return fragments[0] in compact_editor
+        return sum(1 for frag in fragments if frag in compact_editor) >= 2
+
+    def _find_active_send_button(self, tab):
+        try:
+            return tab.run_js("""
+                function visible(el) {
+                    var rect = el.getBoundingClientRect();
+                    var style = window.getComputedStyle(el);
+                    if (rect.width < 20 || rect.height < 15) return false;
+                    if (style.display === 'none' || style.visibility === 'hidden') return false;
+                    return true;
+                }
+                function enabled(el) {
+                    var cls = String(el.className || '').toLowerCase();
+                    var style = window.getComputedStyle(el);
+                    if (el.disabled) return false;
+                    if (cls.indexOf('disabled') >= 0) return false;
+                    if (style.pointerEvents === 'none') return false;
+                    if (Number(style.opacity || 1) < 0.6) return false;
+                    return true;
+                }
+                var candidates = Array.from(document.querySelectorAll(
+                    '.chat-op .btn-send, .editor-container .btn-send, button.btn-send, .btn-send'
+                ));
+                for (var i = 0; i < candidates.length; i++) {
+                    var el = candidates[i];
+                    var text = (el.innerText || el.textContent || '').replace(/\\s+/g, '').trim();
+                    if (visible(el) && enabled(el) && (!text || text === '发送')) {
+                        return el;
+                    }
+                }
+                return null;
+            """)
+        except Exception:
+            return None
+
+    def _send_button_debug_state(self, tab) -> str:
+        try:
+            states = tab.run_js("""
+                function clean(value) { return String(value || '').replace(/\\s+/g, ' ').trim(); }
+                function state(el) {
+                    var rect = el.getBoundingClientRect();
+                    var style = window.getComputedStyle(el);
+                    return clean([
+                        el.tagName,
+                        el.className || '',
+                        clean(el.innerText || el.textContent),
+                        'rect=' + Math.round(rect.x) + ',' + Math.round(rect.y) + ',' + Math.round(rect.width) + 'x' + Math.round(rect.height),
+                        'pe=' + style.pointerEvents,
+                        'opacity=' + style.opacity,
+                        'disabled=' + !!el.disabled
+                    ].join(' | '));
+                }
+                return Array.from(document.querySelectorAll('.btn-send, button, [role="button"]'))
+                    .filter(function(el) {
+                        var text = clean(el.innerText || el.textContent);
+                        var cls = String(el.className || '');
+                        return text.indexOf('发送') >= 0 || cls.indexOf('send') >= 0;
+                    })
+                    .slice(0, 8)
+                    .map(state);
+            """) or []
+            return " || ".join(states)
+        except Exception as e:
+            return f"读取发送按钮状态失败: {e}"
+
+    def _click_send_button(self, tab) -> bool:
+        send_btn = self._find_active_send_button(tab)
+        if not send_btn:
+            log.info(f"    ↪️ 未找到已启用的发送按钮；候选状态: {self._send_button_debug_state(tab)}")
+            return False
+        try:
+            send_btn.run_js("this.scrollIntoView({block:'center', inline:'center'});")
+        except Exception:
+            pass
+        try:
+            tab.actions.move_to(send_btn).click()
+        except Exception:
+            try:
+                send_btn.click()
+            except Exception:
+                try:
+                    send_btn.run_js("this.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}))")
+                except Exception as e:
+                    log.warning(f"    ⚠️ 点击发送按钮失败: {e}")
+                    return False
+        log.info("    🖱️ 已点击启用状态的发送按钮")
+        return True
+
+    def _press_enter_to_send(self, chat_input) -> bool:
+        try:
+            chat_input.click()
+            self._delay(0.1, 0.2)
+            # 先关闭输入法候选框，避免 Enter 被候选框吃掉。
+            try:
+                chat_input.key_down("Escape")
+                chat_input.key_up("Escape")
+                self._delay(0.1, 0.2)
+            except Exception:
+                pass
+            chat_input.key_down("Enter")
+            chat_input.key_up("Enter")
+            log.info("    ⌨️ 已使用 Enter 兜底发送")
+            return True
+        except Exception as e:
+            log.warning(f"    ⚠️ Enter 兜底发送失败: {e}")
+            return False
+
     def _send_message(self, tab, chat_input, ai_message: str) -> bool:
         try:
             chat_input.click()
@@ -2909,28 +3396,23 @@ class BossApplier:
                 chat_input.run_js("this.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:arguments[0]}))", ai_message)
             except Exception:
                 pass
-            send_btn = (tab.ele("css:.btn-send", timeout=1)
-                        or tab.ele("text=发送", timeout=1)
-                        or tab.ele('xpath://*[text()="发送"]', timeout=1)
-                        or tab.ele('xpath://*[contains(@class,"send")]', timeout=1))
-            if send_btn:
-                try:
-                    send_btn.click()
-                except Exception:
-                    chat_input.key_down("Enter")
-                    chat_input.key_up("Enter")
-            else:
-                chat_input.key_down("Enter")
-                chat_input.key_up("Enter")
-            # 概率性失效兜底：再追加一次 Enter 键发送
-            try:
-                chat_input.click()
-                self._delay(0.1, 0.2)
-                chat_input.key_down("Enter")
-                chat_input.key_up("Enter")
-            except Exception:
-                pass
+            if not self._editor_contains_message(chat_input, ai_message):
+                log.warning("    ⚠️ 输入框内未确认完整AI消息，暂不发送，避免只发出残缺内容")
+                return False
+            log.info("    ✅ 输入框已确认完整AI消息")
+
+            if not self._click_send_button(tab):
+                self._press_enter_to_send(chat_input)
             self._delay(AI_CONFIG["post_send_delay"], AI_CONFIG["post_send_delay"] + 1)
+            if not self._wait_ai_message_sent_visible(tab, ai_message):
+                log.warning("    ⚠️ 首次发送后未在聊天记录中确认AI消息，准备二次发送兜底")
+                if self._editor_contains_message(chat_input, ai_message):
+                    if not self._click_send_button(tab):
+                        self._press_enter_to_send(chat_input)
+                    self._delay(AI_CONFIG["post_send_delay"], AI_CONFIG["post_send_delay"] + 1)
+                if not self._wait_ai_message_sent_visible(tab, ai_message, timeout=5.0):
+                    log.warning("    ⚠️ 未在聊天记录中确认AI消息，可能仍停留在输入框、被输入法候选框拦截，或锁屏/失焦导致发送键未生效")
+                    return False
             log.info("    💬 AI消息发送成功！")
             return True
         except Exception as e:
@@ -2940,7 +3422,8 @@ class BossApplier:
     # ══════════════════════════════════════════
     # 核心：处理单个岗位卡片
     # ══════════════════════════════════════════
-    def _process_job_card(self, card, keyword: str = "") -> bool:
+    def _process_job_card(self, card, keyword: str = "", require_target_match: bool = False,
+                          preloaded_job_desc: str = "", preloaded_detail_text: str = "") -> bool:
         card_text = card.text or ""
         if "已沟通" in card_text or "继续沟通" in card_text:
             log.info("    ⏭  跳过 → UI界面已显示「已沟通」")
@@ -2968,8 +3451,11 @@ class BossApplier:
 
             skip_checked = False
             if record.company != "未知公司":
-                reason = self._should_skip(record)
-                skip_checked = True
+                if require_target_match:
+                    reason = self._history_skip_reason(record)
+                else:
+                    reason = self._should_skip(record)
+                    skip_checked = True
                 if reason:
                     log.info(f"    ⏭  跳过 → {reason}")
                     record.status, record.reason = "skipped", reason
@@ -3017,8 +3503,9 @@ class BossApplier:
                     log.info(f"    🧹 招聘人「{record.hr_name}」与公司/职位冲突，已清空")
                 record.hr_name = cleaned_hr
 
+            target_match_text = f"{card_text} {preloaded_detail_text}"
             if not skip_checked:
-                reason = self._should_skip(record)
+                reason = self._should_skip(record, required_text=target_match_text if require_target_match else "")
                 if reason:
                     log.info(f"    ⏭  跳过 → {reason}")
                     record.status, record.reason = "skipped", reason
@@ -3027,6 +3514,21 @@ class BossApplier:
                     return False
 
             job_desc = self._scrape_job_description(detail_tab)
+            if preloaded_job_desc and len(preloaded_job_desc) > len(job_desc):
+                job_desc = preloaded_job_desc
+            target_match_text = f"{card_text} {preloaded_detail_text} {job_desc}"
+
+            if require_target_match:
+                matched_keyword = self._find_target_job_keyword(record.position, target_match_text)
+                if not matched_keyword:
+                    reason = "未命中目标岗位关键词"
+                    log.info(f"    ⏭  跳过 → {reason}")
+                    record.status, record.reason = "skipped", reason
+                    self._save_record(record)
+                    detail_tab.close()
+                    return False
+                keyword = matched_keyword
+                log.info(f"    🎯 目标岗位关键词确认: {matched_keyword}")
 
             jd_skip_reason = self._should_skip_by_jd(job_desc)
             if jd_skip_reason:
@@ -3226,11 +3728,17 @@ class BossApplier:
                 return f"疑似猎头/代招岗位（命中「{kw}」）"
         return ""
 
-    def _should_skip(self, record: JobRecord) -> str:
+    def _history_skip_reason(self, record: JobRecord) -> str:
         if (record.company, record.position) in self.applied_history:
             return "本地历史记录已投递过"
         if (record.company, record.position) in self.skipped_history:
             return "本地历史记录曾跳过"
+        return ""
+
+    def _should_skip(self, record: JobRecord, required_text: str = "") -> str:
+        history_reason = self._history_skip_reason(record)
+        if history_reason:
+            return history_reason
         headhunter_reason = self._headhunter_skip_reason(record)
         if headhunter_reason:
             return headhunter_reason
@@ -3249,7 +3757,14 @@ class BossApplier:
             if kw.lower() in combined:
                 return f"含跳过词「{kw}」"
         if self.cfg["require_keywords"]:
-            if not any(kw.lower() in record.position.lower() for kw in self.cfg["require_keywords"]):
+            requirement_text = f"{record.position} {required_text}".lower()
+            requirement_compact = re.sub(r"\s+", "", requirement_text)
+            allowed_keywords = list(self.cfg.get("require_keywords", [])) + list(self.cfg.get("target_job_keywords", []))
+            if not any(
+                kw
+                and (kw.lower() in requirement_text or re.sub(r"\s+", "", kw.lower()) in requirement_compact)
+                for kw in allowed_keywords
+            ):
                 return "不含必要关键词"
         if self.cfg["skip_if_not_active"]:
             for hint in ["半年前", "一年前", "很久前"]:
@@ -3261,6 +3776,12 @@ class BossApplier:
         if not job_desc:
             return ""
         jd_lower = job_desc.lower()
+        single_rest_text = re.sub(r"\s+", "", job_desc)
+        for safe_word in ["不是单休", "不单休", "非单休"]:
+            single_rest_text = single_rest_text.replace(safe_word, "")
+        for kw in self.cfg.get("single_rest_keywords", []):
+            if kw and kw in single_rest_text:
+                return f"JD含单休词「{kw}」"
         jd_keywords = self.cfg.get("jd_skip_keywords", [])
         for kw in jd_keywords:
             if kw and kw.lower() in jd_lower:
@@ -3277,6 +3798,7 @@ if __name__ == "__main__":
     print(f"  AI模型: {AI_CONFIG['model']}")
     print(f"  AI打招呼: {'已启用' if AI_CONFIG['enabled'] else '已关闭'}")
     print(f"  AI JD筛选: {'已启用' if (AI_CONFIG['enabled'] and AI_CONFIG.get('jd_relevance_filter_enabled', True)) else '已关闭'}")
+    print(f"  投递流程: {CONFIG.get('workflow_mode')} ({CONFIG.get('industry_tab_text', '-')})")
     print(f"  排序模式: scene={CONFIG['scene_param']} (3=最新, 1=推荐)")
     print(f"  经验要求: {'校招/应届' if CONFIG['is_campus_recruitment'] else '全岗位（自动识别校招/社招）'}")
     print(f"  投递间隔: {CONFIG['apply_interval_min']}~{CONFIG['apply_interval_max']}s")
