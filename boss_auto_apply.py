@@ -61,11 +61,20 @@ def _env_bool(name: str, default: bool = True) -> bool:
 
 _mimo_api_key = os.environ.get("MIMO_API_KEY", "").strip()
 _mimo_ai_enabled = _env_bool("MIMO_AI_ENABLED", True)
+_glm_api_key = os.environ.get("GLM_API_KEY", "").strip()
 
-if not _mimo_api_key:
-    print("[INFO] MIMO_API_KEY 未在 .env 中设置，AI 打招呼已关闭")
-elif not _mimo_ai_enabled:
-    print("[INFO] MIMO_AI_ENABLED=false，AI 打招呼已关闭")
+# ★★★ 模型切换开关：改这一行即可切换底层 AI 模型 ★★★
+#   "glm"  → 智谱 GLM-4.7-Flash（200K 上下文 / 128K 输出 / 开启思考模式）
+#   "mimo" → 小米 MiMo（从 .env 读取 MIMO_API_KEY）
+ACTIVE_PROVIDER = "glm"
+
+if ACTIVE_PROVIDER == "mimo":
+    if not _mimo_api_key:
+        print("[INFO] MIMO_API_KEY 未在 .env 中设置，AI 打招呼已关闭")
+    elif not _mimo_ai_enabled:
+        print("[INFO] MIMO_AI_ENABLED=false，AI 打招呼已关闭")
+elif ACTIVE_PROVIDER == "glm" and not _glm_api_key:
+    print("[INFO] GLM_API_KEY 未配置，AI 打招呼已关闭")
 
 def _normalize_mimo_base_url(raw_url: str) -> str:
     base_url = (raw_url or "https://api.xiaomimimo.com/v1").strip().rstrip("/")
@@ -230,19 +239,44 @@ CONFIG = {
 # ══════════════════════════════════════════════
 # AI 配置区
 # ══════════════════════════════════════════════
+PROVIDER_CONFIGS = {
+    "mimo": {
+        "provider": "mimo",
+        "api_key": _mimo_api_key,
+        "model": os.environ.get("MIMO_MODEL", "mimo-v2.5-pro"),
+        "base_url": _normalize_mimo_base_url(
+            os.environ.get("MIMO_BASE_URL") or os.environ.get("MIMO_API_URL") or "https://api.xiaomimimo.com/v1"
+        ),
+        "env_key_name": "MIMO_API_KEY",
+        "token_field": "max_completion_tokens",
+        "thinking_enabled": False,
+    },
+    "glm": {
+        "provider": "glm",
+        "api_key": _glm_api_key,
+        "model": "glm-4.7-flash",
+        "base_url": "https://open.bigmodel.cn/api/paas/v4",
+        "env_key_name": "GLM_API_KEY",
+        "token_field": "max_tokens",
+        "thinking_enabled": True,
+        # 免费版 429 限流时，依次切换到付费资源包模型（同 key 扣对应资源包额度）
+        # 顺序：GLM-4.7体验包 → GLM-4.6V(视觉,纯文本亦可) → GLM-4.5-Air
+        "fallback_models": ["glm-4.7", "glm-4.6v", "glm-4.5-air"],
+    },
+}
+
+_provider_cfg = PROVIDER_CONFIGS.get(ACTIVE_PROVIDER, PROVIDER_CONFIGS["glm"])
+_ai_enabled = bool(_provider_cfg.get("api_key")) and (_mimo_ai_enabled if ACTIVE_PROVIDER == "mimo" else True)
+
 AI_CONFIG = {
-    "api_key": _mimo_api_key,
-    "model": os.environ.get("MIMO_MODEL", "mimo-v2.5-pro"),
-    "base_url": _normalize_mimo_base_url(
-        os.environ.get("MIMO_BASE_URL") or os.environ.get("MIMO_API_URL") or "https://api.xiaomimimo.com/v1"
-    ),
+    **_provider_cfg,
     "api_timeout": 120,
     "api_retry": 1,
     "trust_env": _env_bool("MIMO_TRUST_ENV", False),
     "post_send_delay": 2,
     "typing_char_delay": 0.1,
     "blog_url": "http://124.222.207.22/portfolio",
-    "enabled": bool(_mimo_api_key) and _mimo_ai_enabled,
+    "enabled": _ai_enabled,
     "jd_relevance_filter_enabled": False,
 }
 
@@ -673,15 +707,17 @@ def _api_status_code(error: Exception) -> int | None:
 
 
 def _mimo_error_hint(error: Exception) -> str:
+    env_key = AI_CONFIG.get("env_key_name", "MIMO_API_KEY")
+    provider_label = AI_CONFIG.get("provider", "mimo").upper()
     status_code = _api_status_code(error)
     if isinstance(error, MiMoAPIError) and not status_code:
-        return "请在 .env 中配置有效的 MIMO_API_KEY；也可以设置 MIMO_AI_ENABLED=false 关闭 AI。"
+        return f"请在 .env 中配置有效的 {env_key}；也可以设置 MIMO_AI_ENABLED=false 关闭 AI。"
     if status_code in (401, 403):
-        return "请检查 .env 中的 MIMO_API_KEY 是否来自当前 MiMo 套餐，并使用控制台显示的专属 MIMO_BASE_URL。"
+        return f"请检查 {env_key} 是否有效，以及 {provider_label} 的 base_url 是否正确。"
     if status_code == 429:
         return "请求频率超限，稍后重试或降低投递速度。"
     if status_code == 400:
-        return "请求参数被 MiMo 拒绝，请检查模型名和请求体参数。"
+        return f"请求参数被 {provider_label} 拒绝，请检查模型名和请求体参数。"
     return ""
 
 
@@ -717,31 +753,72 @@ def _get_mimo_client(timeout: int):
     return client
 
 
+def _build_chat_payload(messages: list, max_tokens: int, temperature: float, top_p: float) -> dict:
+    """按当前 provider 构造 chat completions 请求体。"""
+    payload = {
+        "model": AI_CONFIG["model"],
+        "messages": messages,
+        "temperature": temperature,
+        "top_p": top_p,
+        "stream": False,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+    }
+    payload[AI_CONFIG["token_field"]] = max_tokens
+    if AI_CONFIG.get("thinking_enabled"):
+        payload["extra_body"] = {"thinking": {"type": "enabled"}}
+    return payload
+
+
 def _call_mimo_api(payload: dict, timeout: int = 25, retries: int = 1) -> dict:
     if not AI_CONFIG.get("api_key"):
-        raise MiMoAPIError("MIMO_API_KEY 未配置或已被禁用")
+        raise MiMoAPIError("API_KEY 未配置或已被禁用")
+
+    # 模型尝试链：主模型在前，备用模型（仅 429 限流时依次切换）在后
+    primary_model = payload.get("model")
+    fallback_models = [m for m in AI_CONFIG.get("fallback_models", []) if m and m != primary_model]
+    models_to_try = [primary_model] + fallback_models
 
     last_error = None
-    for attempt in range(retries + 1):
-        try:
-            client = _get_mimo_client(timeout)
-            completion = client.chat.completions.create(**payload)
-            return completion.model_dump()
-        except OpenAIError as e:
-            last_error = e
-            if attempt < retries and not _is_non_retryable_api_error(e):
-                log.warning(f"    ⚠️ MiMo API第{attempt+1}次调用失败: {e}，1秒后重试...")
-                time.sleep(1)
-            else:
-                break
-        except Exception as e:
-            last_error = e
-            if attempt < retries:
-                log.warning(f"    ⚠️ MiMo API第{attempt+1}次调用失败: {e}，1秒后重试...")
-                time.sleep(1)
-            else:
-                break
-    raise last_error or RuntimeError("Unknown MiMo API error")
+    for idx, model_name in enumerate(models_to_try):
+        attempt_payload = {**payload, "model": model_name}
+        if idx > 0:
+            log.info(f"    🔄 切换备用模型: {model_name}")
+        max_attempts = retries + 1 if idx == 0 else 1
+        rate_limited = False
+        for attempt in range(max_attempts):
+            try:
+                client = _get_mimo_client(timeout)
+                completion = client.chat.completions.create(**attempt_payload)
+                return completion.model_dump()
+            except OpenAIError as e:
+                last_error = e
+                if _api_status_code(e) == 429:
+                    rate_limited = True
+                    if attempt < max_attempts - 1:
+                        log.warning(f"    ⚠️ {model_name} 限流(429)，1秒后重试...")
+                        time.sleep(1)
+                        continue
+                    break
+                if _is_non_retryable_api_error(e):
+                    break
+                if attempt < max_attempts - 1:
+                    log.warning(f"    ⚠️ API第{attempt+1}次调用失败({model_name}): {e}，1秒后重试...")
+                    time.sleep(1)
+                else:
+                    break
+            except Exception as e:
+                last_error = e
+                if attempt < max_attempts - 1:
+                    log.warning(f"    ⚠️ API第{attempt+1}次调用失败({model_name}): {e}，1秒后重试...")
+                    time.sleep(1)
+                else:
+                    break
+        # 仅在限流(429)时切换下一个备用模型；其他错误直接终止走本地兜底
+        if not rate_limited or idx >= len(models_to_try) - 1:
+            break
+        log.warning(f"    ⚠️ {model_name} 限流(429)，切换下一个模型")
+    raise last_error or RuntimeError("Unknown API error")
 
 def is_campus_job(job_desc: str, position: str) -> bool:
     """
@@ -1050,19 +1127,15 @@ def call_mimo_api(job_desc: str, profile: dict, is_campus: bool = True,
         "不出现\"作为 AI\"\"我是 AI 助手\"等表述。"
         "不要提及自己不会、不熟悉、未掌握的内容，也不要用愿意学习、可以学习等补救式表达。"
     )
-    payload = {
-        "model": AI_CONFIG["model"],
-        "messages": [
+    payload = _build_chat_payload(
+        messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt},
         ],
-        "max_completion_tokens": 4096,
-        "temperature": 0.8,
-        "top_p": 0.95,
-        "stream": False,
-        "frequency_penalty": 0,
-        "presence_penalty": 0,
-    }
+        max_tokens=4096,
+        temperature=0.8,
+        top_p=0.95,
+    )
     try:
         result = _call_mimo_api(payload, timeout=AI_CONFIG.get("api_timeout", 25),
                                 retries=AI_CONFIG.get("api_retry", 1))
@@ -1146,19 +1219,15 @@ def judge_job_relevance_by_ai(position: str, company: str, job_desc: str,
         "你是求职筛选助手，负责判断岗位 JD 与候选人能力是否匹配。"
         "严格按照指定格式输出三行内容，不要输出额外解释。"
     )
-    payload = {
-        "model": AI_CONFIG["model"],
-        "messages": [
+    payload = _build_chat_payload(
+        messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt},
         ],
-        "max_completion_tokens": 512,
-        "temperature": 0.3,
-        "top_p": 0.9,
-        "stream": False,
-        "frequency_penalty": 0,
-        "presence_penalty": 0,
-    }
+        max_tokens=512,
+        temperature=0.3,
+        top_p=0.9,
+    )
     try:
         result = _call_mimo_api(payload, timeout=AI_CONFIG.get("api_timeout", 25),
                                 retries=AI_CONFIG.get("api_retry", 1))
@@ -3795,6 +3864,7 @@ class BossApplier:
 if __name__ == "__main__":
     print("=" * 60)
     print("  Boss直聘 自动投递 v22 (视觉传达设计-王文静)")
+    print(f"  AI Provider: {AI_CONFIG.get('provider', 'mimo').upper()} (切换: ACTIVE_PROVIDER)")
     print(f"  AI模型: {AI_CONFIG['model']}")
     print(f"  AI打招呼: {'已启用' if AI_CONFIG['enabled'] else '已关闭'}")
     print(f"  AI JD筛选: {'已启用' if (AI_CONFIG['enabled'] and AI_CONFIG.get('jd_relevance_filter_enabled', True)) else '已关闭'}")
